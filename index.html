@@ -610,6 +610,13 @@
                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                     <input type="text" id="search-input" placeholder="Tìm kiếm tên, mã SK, tác giả...">
                 </div>
+                <select id="filter-status" style="display:none; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-primary); font-size:13px; cursor:pointer;" onchange="applyStatusFilter()">
+                    <option value="all">📋 Tất cả</option>
+                    <option value="chua_xet">⏳ Chưa xét</option>
+                    <option value="da_xet">✅ Đã xét</option>
+                    <option value="trien_khai">🚀 Triển khai</option>
+                    <option value="khong_trien_khai">❌ Không triển khai</option>
+                </select>
                 <button class="btn btn-outline" id="btn-export" style="display: none;">
                     <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                     Xuất CSV
@@ -653,8 +660,8 @@
                             <th width="120" data-sort="ma">Mã SK</th>
                             <th data-sort="ten">Tên Sáng Kiến</th>
                             <th width="200" data-sort="donvi">Đơn vị gốc</th>
-                            <th width="80" data-sort="diem">Điểm</th>
-                            <th width="120" data-sort="score">Score (%)</th>
+                            <th width="80" data-sort="diem">Điểm AI</th>
+                            <th width="120" data-sort="score">Độ phù hợp</th>
                             <th width="150">Trạng thái</th>
                         </tr>
                     </thead>
@@ -719,7 +726,7 @@
             <div class="modal-body">
                 <div class="score-box">
                     <div class="score-item">
-                        <span class="label">Điểm gốc Hội đồng</span>
+                        <span class="label">Điểm AI chấm</span>
                         <span class="val" id="modal-diem">0.0</span>
                     </div>
                     <div class="score-item">
@@ -957,8 +964,9 @@
         let gsheetData = { master: [], scores: [], tracking: [] };
         let currentDeptData = [];
         let filteredData = [];
-        let sortCol = 'score';
+        let sortCol = 'diem';
         let sortAsc = false;
+        let statusFilter = 'all';
         let chartInstance = null;
         
         // DOM Elements
@@ -1032,8 +1040,8 @@
         }
 
         // Helper: Parse điểm từ API — xử lý bug Google Sheet chuyển số thập phân thành Date
-        // Ví dụ: 8.5 → Sheet hiểu 8/5 → trả về ISO "2026-05-08T17:00:00.000Z"
-        // Logic: nếu là ISO date string → lấy day + month/10 = điểm gốc
+        // Google Sheet (Vietnam locale) đọc 8.5 thành ngày 8/5 → lưu Date → API trả ISO string
+        // Fix: chuyển UTC → UTC+7 (Vietnam), lấy day.month = điểm gốc
         function parseDiem(val) {
             if (val == null || val === '') return 0;
             const s = String(val).trim();
@@ -1043,18 +1051,20 @@
                 try {
                     const d = new Date(s);
                     if (!isNaN(d.getTime())) {
-                        // Lấy UTC date/month (tránh timezone shift)
-                        const day = d.getUTCDate();
-                        const month = d.getUTCMonth() + 1; // 0-indexed
-                        // Điểm gốc = day.month (ví dụ: day=8, month=5 → 8.5)
-                        return parseFloat(day + '.' + month) || 0;
+                        // Chuyển UTC → Vietnam (UTC+7) để khớp timezone Google Sheet
+                        const vn = new Date(d.getTime() + 7 * 3600000);
+                        const day = vn.getUTCDate();
+                        const month = vn.getUTCMonth() + 1;
+                        const result = parseFloat(day + '.' + month);
+                        // Sanity check: điểm AI phải từ 0-10
+                        return (result >= 0 && result <= 10) ? result : 0;
                     }
                 } catch (e) { /* fallthrough */ }
             }
             
             // Số bình thường
             const num = parseFloat(s);
-            return isNaN(num) ? 0 : num;
+            return isNaN(num) ? 0 : (num >= 0 && num <= 10 ? num : 0);
         }
 
         function transformApiToMasterData(rows) {
@@ -1080,7 +1090,8 @@
                     hard_filtered: false,
                     need_review: false,
                     gdrive_url: row.gdrive_url || '',
-                    source_dept: row.source_dept || ''
+                    source_dept: row.source_dept || '',
+                    trang_thai: row.trang_thai || 'chua_xet'
                 });
                 departments[deptKey].count = departments[deptKey].items.length;
             });
@@ -1200,11 +1211,13 @@
                 currentTitle.innerText = "Tổng quan Phân bổ";
                 btnExport.style.display = 'none';
                 searchInput.style.visibility = 'hidden';
+                document.getElementById('filter-status').style.display = 'none';
             } else if (tabId === 'tracking') {
                 document.getElementById('view-kanban').style.display = 'flex';
                 currentTitle.innerText = "Bảng Theo dõi Tiến độ Triển khai";
                 btnExport.style.display = 'none';
                 searchInput.style.visibility = 'visible';
+                document.getElementById('filter-status').style.display = 'none';
                 renderKanban();
             } else {
                 viewTable.classList.add('active');
@@ -1213,6 +1226,9 @@
                 currentTitle.innerText = `${tabId} — ${deptInfo.name}`;
                 btnExport.style.display = 'flex';
                 searchInput.style.visibility = 'visible';
+                document.getElementById('filter-status').style.display = 'inline-block';
+                document.getElementById('filter-status').value = 'all';
+                statusFilter = 'all';
                 
                 // Load data for table
                 currentDeptData = deptInfo.items.map((item, index) => ({...item, stt: index + 1}));
@@ -1233,11 +1249,28 @@
                 );
             }
             
+            // Apply status filter
+            if (statusFilter !== 'all') {
+                filteredData = filteredData.filter(item => {
+                    const status = item.trang_thai || 'chua_xet';
+                    if (statusFilter === 'chua_xet') return status === 'chua_xet' || status === 'chua_cham';
+                    if (statusFilter === 'da_xet') return status !== 'chua_xet' && status !== 'chua_cham';
+                    if (statusFilter === 'trien_khai') return status === 'trien_khai' || status === 'dang_tk' || status === 'hoan_thanh';
+                    if (statusFilter === 'khong_trien_khai') return status === 'khong_trien_khai' || status === 'huy';
+                    return true;
+                });
+            }
+            
             if (currentTab === 'tracking') {
                 renderKanban();
             } else {
                 renderTable();
             }
+        }
+
+        function applyStatusFilter() {
+            statusFilter = document.getElementById('filter-status').value;
+            filterAndRenderTable(searchInput.value);
         }
 
         function renderTable() {
@@ -1270,10 +1303,17 @@
                 const scorePercent = (item.score * 100).toFixed(1);
                 
                 let tags = '';
-                if (item.hard_filtered) tags += `<span class="tag danger">Ngoài PCVT</span> `;
-                else if (item.need_review) tags += `<span class="tag warning">Cần Review</span> `;
-                else tags += `<span class="tag success">Phù hợp</span>`;
-                if (item.source_dept) tags += ` <span class="tag" style="background:rgba(255,102,0,0.12);color:#FF6600;font-size:11px">📌 Từ ${item.source_dept}</span>`;
+                const st = item.trang_thai || 'chua_xet';
+                if (st === 'trien_khai' || st === 'dang_tk' || st === 'hoan_thanh') {
+                    tags += `<span class="tag success">🚀 Triển khai</span> `;
+                } else if (st === 'khong_trien_khai' || st === 'huy') {
+                    tags += `<span class="tag danger">❌ Không TK</span> `;
+                } else if (st === 'da_xet') {
+                    tags += `<span class="tag" style="background:rgba(0,75,135,0.12);color:var(--primary)">✅ Đã xét</span> `;
+                } else {
+                    tags += `<span class="tag warning">⏳ Chưa xét</span> `;
+                }
+                if (item.source_dept) tags += `<span class="tag" style="background:rgba(255,102,0,0.12);color:#FF6600;font-size:11px">📌 ${item.source_dept}</span>`;
                 
                 tr.innerHTML = `
                     <td>${item.stt}</td>

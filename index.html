@@ -1031,6 +1031,32 @@
             }
         }
 
+        // Helper: Parse điểm từ API — xử lý bug Google Sheet chuyển số thập phân thành Date
+        // Ví dụ: 8.5 → Sheet hiểu 8/5 → trả về ISO "2026-05-08T17:00:00.000Z"
+        // Logic: nếu là ISO date string → lấy day + month/10 = điểm gốc
+        function parseDiem(val) {
+            if (val == null || val === '') return 0;
+            const s = String(val).trim();
+            
+            // Nếu là ISO date string (chứa 'T' và '-')
+            if (s.includes('T') && s.includes('-')) {
+                try {
+                    const d = new Date(s);
+                    if (!isNaN(d.getTime())) {
+                        // Lấy UTC date/month (tránh timezone shift)
+                        const day = d.getUTCDate();
+                        const month = d.getUTCMonth() + 1; // 0-indexed
+                        // Điểm gốc = day.month (ví dụ: day=8, month=5 → 8.5)
+                        return parseFloat(day + '.' + month) || 0;
+                    }
+                } catch (e) { /* fallthrough */ }
+            }
+            
+            // Số bình thường
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+
         function transformApiToMasterData(rows) {
             const departments = {};
             
@@ -1047,7 +1073,7 @@
                     ma: row.ma_sk || '',
                     ten: row.ten_sk || '',
                     donvi: row.don_vi || '',
-                    diem: parseFloat(row.diem_goc) || 0,
+                    diem: parseDiem(row.diem_goc),
                     score: 1.0,
                     explain: row.ly_do_phan_loai || '',
                     giaiphap: row.tom_tat_giai_phap || '',

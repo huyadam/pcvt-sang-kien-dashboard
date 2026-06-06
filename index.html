@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Phân loại Sáng kiến PCVT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #004B87;
+            --primary-hover: #003666;
+            --accent: #FF6600;
+            --accent-hover: #e65c00;
+            --bg-color: #f4f6f8;
+            --surface: #ffffff;
+            --surface-hover: #f0f4f8;
+            --text-primary: #1a2634;
+            --text-secondary: #4a5a6c;
+            --border: #e0e6ed;
+            --success: #2e7d32;
+            --warning: #ed6c02;
+            --danger: #d32f2f;
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c0c8d0;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aab5;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .logo-container {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 14px;
+        }
+
+        .logo-text h1 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background-color: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .nav-item .badge {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .nav-item.active .badge {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            height: 70px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+
+        .header-title h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px 8px 36px;
+            border-radius: 20px;
+            font-size: 14px;
+            width: 250px;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            width: 300px;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            fill: var(--text-secondary);
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--surface-hover);
+        }
+
+        /* View Container */
+        .view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Overview */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .stat-card.accent .stat-value {
+            color: var(--accent);
+        }
+
+        .chart-container {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            height: 400px;
+        }
+
+        /* Table View */
+        .table-container {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: var(--text-primary);
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .tag.warning {
+            background-color: rgba(237, 108, 2, 0.2);
+            color: #ffb74d;
+        }
+
+        .tag.danger {
+            background-color: rgba(211, 47, 47, 0.2);
+            color: #ef5350;
+        }
+        
+        .tag.success {
+            background-color: rgba(46, 125, 50, 0.2);
+            color: #81c784;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background-color: var(--accent);
+            border-radius: 3px;
+        }
+
+        .score-slider {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+        .score-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,75,135,0.3);
+        }
+        .score-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .modal-title h3 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .modal-meta {
+            display: flex;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .detail-group {
+            margin-bottom: 24px;
+        }
+
+        .detail-group h4 {
+            color: var(--accent);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .detail-group p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: rgba(0,0,0,0.03);
+            padding: 16px;
+            border-radius: var(--radius);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .score-box {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .score-item {
+            background-color: rgba(0,0,0,0.03);
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .score-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .score-item .val {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,102,0,0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo-icon">SK</div>
+            <div class="logo-text">
+                <h1>SÁNG KIẾN PCVT</h1>
+                <p>Hệ thống Phân loại AI</p>
+            </div>
+        </div>
+        <div class="nav-menu" id="nav-menu">
+            <div class="nav-item active" data-target="overview">
+                <span>📊 Tổng quan</span>
+            </div>
+            <div class="nav-item" data-target="tracking">
+                <span>📊 Theo dõi Tiến độ</span>
+            </div>
+            <!-- Tabs generated by JS -->
+        </div>
+        <div class="sidebar-footer" id="last-updated">
+            Cập nhật: --/--/----
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <div class="header-title">
+                <h2 id="current-title">Tổng quan Phân bổ</h2>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm tên, mã SK, tác giả...">
+                </div>
+                <button class="btn btn-outline" id="btn-export" style="display: none;">
+                    <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Xuất CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- View: Overview -->
+        <div class="view-container active" id="view-overview">
+            <div class="stats-grid">
+                <div class="stat-card accent">
+                    <div class="stat-title">Tổng số Sáng kiến</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Sáng kiến Hợp lệ</div>
+                    <div class="stat-value" id="stat-valid">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Hard-filtered (Không PCVT)</div>
+                    <div class="stat-value" id="stat-filtered">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Cần Review thủ công</div>
+                    <div class="stat-value" id="stat-review">0</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <!-- View: Table Template -->
+        <div class="view-container" id="view-table">
+            <div class="table-container">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th width="80" data-sort="stt">STT</th>
+                            <th width="120" data-sort="ma">Mã SK</th>
+                            <th data-sort="ten">Tên Sáng Kiến</th>
+                            <th width="200" data-sort="donvi">Đơn vị gốc</th>
+                            <th width="80" data-sort="diem">Điểm</th>
+                            <th width="120" data-sort="score">Score (%)</th>
+                            <th width="150">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="table-empty" class="empty-state" style="display:none;">
+                Không tìm thấy sáng kiến nào phù hợp.
+            </div>
+        </div>
+
+        <!-- View: Kanban -->
+        <div class="view-container" id="view-kanban" style="display: none; height: 100%; flex-direction: column;">
+            <div class="kanban-board" style="display: flex; gap: 20px; height: 100%; overflow-x: auto;">
+                <!-- Column: Todo -->
+                <div class="kanban-column" id="col-chua_cham" style="flex: 1; min-width: 300px; background: rgba(0,0,0,0.02); border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between;">
+                        <span>📥 Chờ duyệt</span>
+                        <span class="badge" id="count-todo">0</span>
+                    </div>
+                    <div class="kanban-items" id="kanban-todo" style="padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
+                </div>
+                
+                <!-- Column: Doing -->
+                <div class="kanban-column" id="col-dang_tk" style="flex: 1; min-width: 300px; background: rgba(0,75,135,0.02); border-radius: 8px; border: 1px solid rgba(0,75,135,0.2); display: flex; flex-direction: column;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid rgba(0,75,135,0.2); font-weight: 600; display: flex; justify-content: space-between; color: var(--primary);">
+                        <span>⏳ Đang triển khai</span>
+                        <span class="badge" id="count-doing" style="background: var(--primary);">0</span>
+                    </div>
+                    <div class="kanban-items" id="kanban-doing" style="padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
+                </div>
+                
+                <!-- Column: Done -->
+                <div class="kanban-column" id="col-hoan_thanh" style="flex: 1; min-width: 300px; background: rgba(46,125,50,0.02); border-radius: 8px; border: 1px solid rgba(46,125,50,0.2); display: flex; flex-direction: column;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid rgba(46,125,50,0.2); font-weight: 600; display: flex; justify-content: space-between; color: #2e7d32;">
+                        <span>✅ Hoàn thành</span>
+                        <span class="badge" id="count-done" style="background: #2e7d32;">0</span>
+                    </div>
+                    <div class="kanban-items" id="kanban-done" style="padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h3 id="modal-name">Tên Sáng Kiến</h3>
+                    <div class="modal-meta">
+                        <span class="tag" id="modal-id">SK-0000</span>
+                        <span id="modal-dept">Đơn vị</span>
+                    </div>
+                </div>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="score-box">
+                    <div class="score-item">
+                        <span class="label">Điểm gốc Hội đồng</span>
+                        <span class="val" id="modal-diem">0.0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="label">Độ phù hợp Phòng/Đội (AI)</span>
+                        <span class="val" id="modal-score" style="color: var(--accent)">0%</span>
+                    </div>
+                    <div class="score-item" style="flex:1">
+                        <span class="label">Cơ sở phân loại</span>
+                        <span class="val" id="modal-reason" style="font-size: 14px; color: var(--text-primary); font-weight: normal; margin-top: 4px;">...</span>
+                    </div>
+                </div>
+                <div id="modal-gdrive" style="margin-bottom: 20px; display: none; align-items: center; gap: 8px;">
+                    <button id="modal-gdrive-btn" onclick="" class="btn" style="background: linear-gradient(135deg, #004B87, #FF6600); border: none; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; padding: 10px 20px; border-radius: 4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                        📄 Xem Tài liệu Trực tiếp
+                    </button>
+                    <button id="modal-score-btn" onclick="openScoreModal()" class="btn" style="background: linear-gradient(135deg, #004B87, #0077CC); border: none; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; padding: 10px 20px; border-radius: 4px;">
+                        ✏️ Chấm điểm
+                    </button>
+                </div>
+                <div id="modal-no-gdrive" style="margin-bottom: 20px; display: none;">
+                    <div style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px;">
+                        <span>⚠️ Không tìm thấy file gốc trên Google Drive.</span>
+                        <button id="modal-score-btn-no-gdrive" onclick="openScoreModal()" class="btn" style="background: linear-gradient(135deg, #004B87, #0077CC); border: none; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 16px; border-radius: 4px;">
+                            ✏️ Chấm điểm
+                        </button>
+                    </div>
+                </div>
+                <div class="detail-group">
+                    <h4>TÓM TẮT GIẢI PHÁP</h4>
+                    <p id="modal-desc">...</p>
+                </div>
+                <div id="modal-warning" class="detail-group" style="display: none;">
+                    <p style="background-color: rgba(237, 108, 2, 0.1); border-color: var(--warning); color: #ffb74d;">
+                        ⚠️ <strong>Sáng kiến cần Review thủ công:</strong> Có độ phù hợp tương đương với một Phòng/Đội khác. Vui lòng xem xét lại dựa trên tóm tắt giải pháp.
+                    </p>
+                </div>
+                <div id="modal-danger" class="detail-group" style="display: none;">
+                    <p style="background-color: rgba(211, 47, 47, 0.1); border-color: var(--danger); color: #ef5350;">
+                        🚫 <strong>Không phù hợp PCVT:</strong> Sáng kiến chứa các từ khóa thuộc lưới 110kV, công ty thí nghiệm điện, hoặc lĩnh vực nằm ngoài phạm vi PC Vũng Tàu.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal PDF Viewer -->
+    <div class="modal-overlay" id="pdf-modal" onclick="if(event.target === this) closePdfModal()">
+        <div class="modal-content" style="width: 95%; max-width: 1400px; height: 95vh; padding: 0;">
+            <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); border-radius: 12px 12px 0 0;">
+                <h3 id="pdf-modal-title" style="font-size: 16px; color: var(--primary);">Tài liệu đính kèm</h3>
+                <button class="modal-close" onclick="closePdfModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 0; flex: 1; display: flex; border-radius: 0 0 12px 12px; overflow: hidden;">
+                <iframe id="pdf-iframe" src="" style="width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chấm điểm -->
+    <div class="modal-overlay" id="score-modal" onclick="if(event.target === this) closeScoreModal()">
+        <div class="modal-content" style="width: 90%; max-width: 680px; max-height: 90vh; padding: 0;">
+            <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface); border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h3 style="font-size: 16px; color: var(--primary); margin: 0;">✏️ Chấm điểm Sáng kiến</h3>
+                    <div id="score-modal-sk" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;"></div>
+                </div>
+                <button class="modal-close" onclick="closeScoreModal()" style="margin-top: -4px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px; overflow-y: auto;">
+                <!-- 5 tiêu chí -->
+                <div id="score-criteria">
+                    <div class="score-criterion" data-max="30">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:600; font-size:14px; color: var(--text-primary);">1. Tính mới & Sáng tạo</label>
+                            <span style="font-size:13px; color:var(--text-secondary);">Max 30đ</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                            0-10: Cải tiến nhỏ | 11-20: Ứng dụng CNTT mới | 21-30: Đột phá (AI/RPA/IoT)
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="range" min="0" max="30" value="0" class="score-slider" id="slider-d1" oninput="updateScore()" style="flex:1;">
+                            <input type="number" min="0" max="30" value="0" class="score-num" id="num-d1" oninput="syncSlider('d1')" style="width:60px; text-align:center; padding:6px; border:1px solid var(--border); border-radius:6px; font-size:16px; font-weight:600; color: var(--text-primary); background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div class="score-criterion" data-max="15" style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:600; font-size:14px; color: var(--text-primary);">2. Khả năng tự chủ</label>
+                            <span style="font-size:13px; color:var(--text-secondary);">Max 15đ</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                            11-15: Nội bộ 100% | 5-10: Phối hợp nhỏ | 0-4: Phụ thuộc nhà thầu
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="range" min="0" max="15" value="0" class="score-slider" id="slider-d2" oninput="updateScore()" style="flex:1;">
+                            <input type="number" min="0" max="15" value="0" class="score-num" id="num-d2" oninput="syncSlider('d2')" style="width:60px; text-align:center; padding:6px; border:1px solid var(--border); border-radius:6px; font-size:16px; font-weight:600; color: var(--text-primary); background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div class="score-criterion" data-max="15" style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:600; font-size:14px; color: var(--text-primary);">3. Chi phí triển khai</label>
+                            <span style="font-size:13px; color:var(--text-secondary);">Max 15đ</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                            11-15: Zero-cost | 5-10: &lt;20 triệu | 0-4: Đầu tư lớn
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="range" min="0" max="15" value="0" class="score-slider" id="slider-d3" oninput="updateScore()" style="flex:1;">
+                            <input type="number" min="0" max="15" value="0" class="score-num" id="num-d3" oninput="syncSlider('d3')" style="width:60px; text-align:center; padding:6px; border:1px solid var(--border); border-radius:6px; font-size:16px; font-weight:600; color: var(--text-primary); background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div class="score-criterion" data-max="20" style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:600; font-size:14px; color: var(--text-primary);">4. Hiệu quả Kinh tế</label>
+                            <span style="font-size:13px; color:var(--text-secondary);">Max 20đ</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                            15-20: Tiết kiệm &gt;100tr/năm | 5-14: Tiết kiệm vật tư, chi phí
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="range" min="0" max="20" value="0" class="score-slider" id="slider-d4" oninput="updateScore()" style="flex:1;">
+                            <input type="number" min="0" max="20" value="0" class="score-num" id="num-d4" oninput="syncSlider('d4')" style="width:60px; text-align:center; padding:6px; border:1px solid var(--border); border-radius:6px; font-size:16px; font-weight:600; color: var(--text-primary); background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div class="score-criterion" data-max="20" style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:600; font-size:14px; color: var(--text-primary);">5. Hiệu quả An toàn-DV</label>
+                            <span style="font-size:13px; color:var(--text-secondary);">Max 20đ</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+                            15-20: Loại bỏ TNLĐ | 5-14: Cải thiện môi trường, giảm nặng nhọc
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="range" min="0" max="20" value="0" class="score-slider" id="slider-d5" oninput="updateScore()" style="flex:1;">
+                            <input type="number" min="0" max="20" value="0" class="score-num" id="num-d5" oninput="syncSlider('d5')" style="width:60px; text-align:center; padding:6px; border:1px solid var(--border); border-radius:6px; font-size:16px; font-weight:600; color: var(--text-primary); background: var(--bg-color);">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tổng điểm + Xếp loại (realtime) -->
+                <div style="margin-top:24px; padding:16px; background: linear-gradient(135deg, rgba(0,75,135,0.06), rgba(255,102,0,0.06)); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:13px; color:var(--text-secondary);">Tổng điểm</div>
+                        <div id="score-total" style="font-size:36px; font-weight:700; color:var(--primary);">0</div>
+                    </div>
+                    <div id="score-grade" style="font-size:48px; font-weight:800; padding:8px 24px; border-radius:12px; background:rgba(0,0,0,0.05); color: var(--text-secondary);">—</div>
+                </div>
+
+                <!-- Người chấm + Ghi chú -->
+                <div style="margin-top:20px;">
+                    <label style="font-weight:600; font-size:14px; display:block; margin-bottom:6px; color: var(--text-primary);">Người chấm</label>
+                    <input type="text" id="score-reviewer" placeholder="Nhập tên người chấm..." style="width:100%; padding:10px 14px; border:1px solid var(--border); background: var(--bg-color); color: var(--text-primary); border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+                <div style="margin-top:16px;">
+                    <label style="font-weight:600; font-size:14px; display:block; margin-bottom:6px; color: var(--text-primary);">Ghi chú</label>
+                    <textarea id="score-notes" rows="3" placeholder="Nhận xét, đề xuất..." style="width:100%; padding:10px 14px; border:1px solid var(--border); background: var(--bg-color); color: var(--text-primary); border-radius:8px; font-size:14px; resize:vertical; box-sizing:border-box;"></textarea>
+                </div>
+
+                <!-- Nút Submit -->
+                <div style="margin-top:24px; display:flex; gap:12px; justify-content:flex-end;">
+                    <button onclick="closeScoreModal()" style="padding:10px 24px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color: var(--text-primary); cursor:pointer; font-size:14px;">Hủy</button>
+                    <button onclick="submitScore()" id="btn-submit-score" style="padding:10px 24px; border:none; border-radius:8px; background:linear-gradient(135deg, #004B87, #FF6600); color:white; cursor:pointer; font-size:14px; font-weight:600;">💾 Lưu chấm điểm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tracking -->
+    <div class="modal-overlay" id="tracking-modal" onclick="if(event.target === this) closeTrackingModal()">
+        <div class="modal-content" style="width: 90%; max-width: 500px;">
+            <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 style="font-size: 16px; color: var(--primary); margin: 0;">🚀 Cập nhật Tiến độ Sáng kiến</h3>
+                    <div id="tracking-modal-sk" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;"></div>
+                </div>
+                <button class="modal-close" onclick="closeTrackingModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Người phụ trách</label>
+                        <input type="text" id="track-assignee" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:4px;">
+                    </div>
+                    <div style="display: flex; gap: 16px;">
+                        <div style="flex: 1;">
+                            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Ngày bắt đầu</label>
+                            <input type="date" id="track-start" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:4px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Deadline</label>
+                            <input type="date" id="track-deadline" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:4px;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Tiến độ: <span id="track-progress-val">0</span>%</label>
+                        <input type="range" id="track-progress" min="0" max="100" value="0" style="width:100%;" oninput="document.getElementById('track-progress-val').innerText = this.value;">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Trạng thái</label>
+                        <select id="track-status" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:4px;">
+                            <option value="chua_cham">Chờ duyệt</option>
+                            <option value="dang_tk">Đang triển khai</option>
+                            <option value="hoan_thanh">Hoàn thành</option>
+                            <option value="huy">Hủy bỏ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">Ghi chú</label>
+                        <textarea id="track-note" rows="2" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:4px;"></textarea>
+                    </div>
+                    <button onclick="submitTracking()" id="btn-submit-track" class="btn" style="background: var(--primary); color: white; width: 100%; justify-content: center; margin-top: 8px;">💾 Cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === GOOGLE SHEET API ===
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzrd1hFpqoRtez24NMUM4J-R8xEoNlYFWx2F_qXU06fFO8snVkFg-I49oG7RckoOec/exec'; // ← Paste Apps Script Web App URL ở đây
+        // Nếu API_URL rỗng → dùng inline data (fallback)
+
+        // State
+        let masterData = null;
+        let currentTab = 'overview';
+        let gsheetData = { master: [], scores: [], tracking: [] };
+        let currentDeptData = [];
+        let filteredData = [];
+        let sortCol = 'score';
+        let sortAsc = false;
+        let chartInstance = null;
+        
+        // DOM Elements
+        const loadingEl = document.getElementById('loading');
+        const navMenu = document.getElementById('nav-menu');
+        const viewOverview = document.getElementById('view-overview');
+        const viewTable = document.getElementById('view-table');
+        const currentTitle = document.getElementById('current-title');
+        const searchInput = document.getElementById('search-input');
+        const btnExport = document.getElementById('btn-export');
+        const tableBody = document.getElementById('table-body');
+        const tableEmpty = document.getElementById('table-empty');
+        const modal = document.getElementById('detail-modal');
+
+        // Fetch Data — 100% Online từ Google Sheet
+        async function loadData() {
+            if (!API_URL) {
+                loadingEl.innerHTML = `
+                    <div style="color:var(--danger);text-align:center;max-width:400px;">
+                        <h3>⚠️ Chưa cấu hình API</h3>
+                        <p style="margin-top:10px;font-size:14px;color:var(--text-secondary)">
+                            Chưa có API_URL. Deploy Google Apps Script và cập nhật biến API_URL.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const pEl = loadingEl.querySelector('p');
+                if (pEl) pEl.textContent = 'Đang kết nối Google Sheet...';
+                
+                const resp = await fetch(API_URL + '?action=all', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                const text = await resp.text();
+                let apiData;
+                try {
+                    apiData = JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error('API trả về dữ liệu không hợp lệ (không phải JSON)');
+                }
+
+                masterData = transformApiToMasterData(apiData.master || []);
+                gsheetData = apiData;
+                
+                console.log('✅ Đã tải dữ liệu:', masterData.total, 'sáng kiến,', Object.keys(masterData.departments).length, 'phòng/đội');
+
+                initApp();
+
+            } catch (e) {
+                console.error("Error loading data:", e);
+                const msg = e.name === 'AbortError' 
+                    ? 'Kết nối quá thời gian (30s). Kiểm tra mạng hoặc thử lại.' 
+                    : e.message;
+                loadingEl.innerHTML = `
+                    <div style="color:var(--danger);text-align:center;max-width:400px;">
+                        <h3>❌ Lỗi tải dữ liệu</h3>
+                        <p style="margin-top:10px;font-size:14px;color:var(--text-secondary)">
+                            ${msg}
+                        </p>
+                        <button onclick="location.reload()" style="margin-top:15px;padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">
+                            🔄 Thử lại
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function transformApiToMasterData(rows) {
+            const departments = {};
+            
+            rows.forEach(row => {
+                const deptKey = row.phong_doi || 'UNKNOWN';
+                if (!departments[deptKey]) {
+                    departments[deptKey] = {
+                        name: row.ten_phong_doi || deptKey,
+                        count: 0,
+                        items: []
+                    };
+                }
+                departments[deptKey].items.push({
+                    ma: row.ma_sk || '',
+                    ten: row.ten_sk || '',
+                    donvi: row.don_vi || '',
+                    diem: parseFloat(row.diem_goc) || 0,
+                    score: 1.0,
+                    explain: row.ly_do_phan_loai || '',
+                    giaiphap: row.tom_tat_giai_phap || '',
+                    hard_filtered: false,
+                    need_review: false,
+                    gdrive_url: row.gdrive_url || '',
+                    source_dept: row.source_dept || ''
+                });
+                departments[deptKey].count = departments[deptKey].items.length;
+            });
+            
+            return {
+                generated_at: new Date().toISOString(),
+                method: 'Google Sheet API (Online)',
+                total: rows.length,
+                classified: rows.length,
+                departments: departments
+            };
+        }
+
+
+        function initApp() {
+            // Update stats
+            const total = masterData.total;
+            let filtered = 0;
+            let review = 0;
+            
+            Object.values(masterData.departments).forEach(dept => {
+                dept.items.forEach(item => {
+                    if (item.hard_filtered) filtered++;
+                    if (item.need_review && !item.hard_filtered) review++;
+                });
+            });
+            
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-valid').innerText = total - filtered;
+            document.getElementById('stat-filtered').innerText = filtered;
+            document.getElementById('stat-review').innerText = review;
+            
+            // Format date
+            const d = new Date(masterData.generated_at);
+            document.getElementById('last-updated').innerText = `Cập nhật: ${d.toLocaleString('vi-VN')}`;
+
+            // Render Nav
+            renderNav();
+            
+            // Init Chart
+            renderChart();
+            
+            // Event Listeners
+            searchInput.addEventListener('input', (e) => {
+                if (currentTab !== 'overview') {
+                    filterAndRenderTable(e.target.value);
+                }
+            });
+            
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = th.dataset.sort;
+                    if (sortCol === col) {
+                        sortAsc = !sortAsc;
+                    } else {
+                        sortCol = col;
+                        sortAsc = (col === 'stt' || col === 'ma' || col === 'ten');
+                    }
+                    renderTable();
+                });
+            });
+            
+            btnExport.addEventListener('click', exportCSV);
+            
+            // Close modal on escape or click outside
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeModal();
+            });
+            modal.addEventListener('click', e => {
+                if (e.target === modal) closeModal();
+            });
+
+            // Hide loading
+            loadingEl.style.display = 'none';
+        }
+
+        function renderNav() {
+            const depts = Object.entries(masterData.departments);
+            
+            depts.forEach(([key, dept]) => {
+                const div = document.createElement('div');
+                div.className = 'nav-item';
+                div.dataset.target = key;
+                
+                // Count valid items
+                const validCount = dept.items.filter(i => !i.hard_filtered).length;
+                
+                div.innerHTML = `
+                    <span>📁 ${key}</span>
+                    <span class="badge">${validCount}</span>
+                `;
+                
+                div.addEventListener('click', () => switchTab(key));
+                navMenu.appendChild(div);
+            });
+            
+            // Add click for overview
+            navMenu.querySelector('[data-target="overview"]').addEventListener('click', () => switchTab('overview'));
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // Update nav UI
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.target === tabId);
+            });
+            
+            searchInput.value = '';
+            
+            document.getElementById('view-kanban').style.display = 'none';
+            viewOverview.classList.remove('active');
+            viewTable.classList.remove('active');
+            
+            if (tabId === 'overview') {
+                viewOverview.classList.add('active');
+                currentTitle.innerText = "Tổng quan Phân bổ";
+                btnExport.style.display = 'none';
+                searchInput.style.visibility = 'hidden';
+            } else if (tabId === 'tracking') {
+                document.getElementById('view-kanban').style.display = 'flex';
+                currentTitle.innerText = "Bảng Theo dõi Tiến độ Triển khai";
+                btnExport.style.display = 'none';
+                searchInput.style.visibility = 'visible';
+                renderKanban();
+            } else {
+                viewTable.classList.add('active');
+                
+                const deptInfo = masterData.departments[tabId];
+                currentTitle.innerText = `${tabId} — ${deptInfo.name}`;
+                btnExport.style.display = 'flex';
+                searchInput.style.visibility = 'visible';
+                
+                // Load data for table
+                currentDeptData = deptInfo.items.map((item, index) => ({...item, stt: index + 1}));
+                filterAndRenderTable('');
+            }
+        }
+
+        function filterAndRenderTable(query) {
+            query = query.toLowerCase().trim();
+            
+            if (!query) {
+                filteredData = [...currentDeptData];
+            } else {
+                filteredData = currentDeptData.filter(item => 
+                    item.ten.toLowerCase().includes(query) ||
+                    item.ma.toLowerCase().includes(query) ||
+                    item.donvi.toLowerCase().includes(query)
+                );
+            }
+            
+            if (currentTab === 'tracking') {
+                renderKanban();
+            } else {
+                renderTable();
+            }
+        }
+
+        function renderTable() {
+            // Sort
+            filteredData.sort((a, b) => {
+                let valA = a[sortCol];
+                let valB = b[sortCol];
+                
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = '';
+                tableEmpty.style.display = 'block';
+                return;
+            }
+            
+            tableEmpty.style.display = 'none';
+            tableBody.innerHTML = '';
+            
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+                if (item.hard_filtered) tr.style.opacity = '0.5';
+                
+                const scorePercent = (item.score * 100).toFixed(1);
+                
+                let tags = '';
+                if (item.hard_filtered) tags += `<span class="tag danger">Ngoài PCVT</span> `;
+                else if (item.need_review) tags += `<span class="tag warning">Cần Review</span> `;
+                else tags += `<span class="tag success">Phù hợp</span>`;
+                if (item.source_dept) tags += ` <span class="tag" style="background:rgba(255,102,0,0.12);color:#FF6600;font-size:11px">📌 Từ ${item.source_dept}</span>`;
+                
+                tr.innerHTML = `
+                    <td>${item.stt}</td>
+                    <td style="font-family:monospace">${item.ma}</td>
+                    <td style="font-weight:500;color:var(--text-primary)">
+                        ${item.ten.length > 80 ? item.ten.substring(0, 80) + '...' : item.ten}
+                    </td>
+                    <td style="color:var(--text-secondary)">${item.donvi}</td>
+                    <td><strong style="color:var(--primary)">${item.diem ? item.diem.toFixed(1) : '-'}</strong></td>
+                    <td>
+                        <div>${scorePercent}%</div>
+                        <div class="score-bar">
+                            <div class="score-fill" style="width: ${scorePercent}%"></div>
+                        </div>
+                    </td>
+                    <td>${tags}</td>
+                `;
+                
+                tr.addEventListener('click', () => openModal(item));
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function openModal(item) {
+            document.getElementById('modal-id').innerText = item.ma;
+            document.getElementById('modal-name').innerText = item.ten;
+            document.getElementById('modal-dept').innerText = item.donvi;
+            document.getElementById('modal-diem').innerText = item.diem ? item.diem.toFixed(1) : 'N/A';
+            document.getElementById('modal-score').innerText = `${(item.score * 100).toFixed(1)}%`;
+            document.getElementById('modal-reason').innerText = item.explain;
+            
+            const descEl = document.getElementById('modal-desc');
+            descEl.innerText = item.giaiphap || 'Tài liệu không có mô tả chi tiết giải pháp.';
+            
+            // Google Drive popup button
+            const gdriveDiv = document.getElementById('modal-gdrive');
+            const noGdriveDiv = document.getElementById('modal-no-gdrive');
+            const gdriveBtn = document.getElementById('modal-gdrive-btn');
+            
+            if (item.gdrive_url) {
+                const previewUrl = item.gdrive_url.replace('/view', '/preview');
+                gdriveBtn.onclick = function() {
+                    openPdfModal(previewUrl, item.ten);
+                };
+                gdriveDiv.style.display = 'block';
+                noGdriveDiv.style.display = 'none';
+            } else {
+                gdriveDiv.style.display = 'none';
+                noGdriveDiv.style.display = 'block';
+            }
+            
+            document.getElementById('modal-warning').style.display = (item.need_review && !item.hard_filtered) ? 'block' : 'none';
+            document.getElementById('modal-danger').style.display = item.hard_filtered ? 'block' : 'none';
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function openPdfModal(url, title) {
+            document.getElementById('pdf-modal-title').innerText = title;
+            document.getElementById('pdf-iframe').src = url;
+            document.getElementById('pdf-modal').classList.add('active');
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdf-modal').classList.remove('active');
+            document.getElementById('pdf-iframe').src = '';
+        }
+
+        // === CHẤM ĐIỂM ===
+        let currentScoreItem = null;
+
+        function openScoreModal() {
+            currentScoreItem = {
+                ma: document.getElementById('modal-id').innerText,
+                ten: document.getElementById('modal-name').innerText,
+                phong_doi: currentTab !== 'overview' ? currentTab : '' 
+            };
+            
+            document.getElementById('score-modal-sk').innerText = `${currentScoreItem.ma} — ${currentScoreItem.ten}`;
+            
+            // Reset form
+            ['d1','d2','d3','d4','d5'].forEach(id => {
+                document.getElementById('slider-' + id).value = 0;
+                document.getElementById('num-' + id).value = 0;
+            });
+            updateScore();
+            document.getElementById('score-reviewer').value = '';
+            document.getElementById('score-notes').value = '';
+            
+            document.getElementById('score-modal').classList.add('active');
+        }
+
+        function closeScoreModal() {
+            document.getElementById('score-modal').classList.remove('active');
+        }
+
+        function syncSlider(id) {
+            const num = document.getElementById('num-' + id);
+            const slider = document.getElementById('slider-' + id);
+            const max = parseInt(slider.max);
+            let val = parseInt(num.value) || 0;
+            if (val > max) val = max;
+            if (val < 0) val = 0;
+            num.value = val;
+            slider.value = val;
+            updateScore();
+        }
+
+        function updateScore() {
+            ['d1','d2','d3','d4','d5'].forEach(id => {
+                const slider = document.getElementById('slider-' + id);
+                const num = document.getElementById('num-' + id);
+                num.value = slider.value;
+            });
+            
+            const d1 = parseInt(document.getElementById('slider-d1').value) || 0;
+            const d2 = parseInt(document.getElementById('slider-d2').value) || 0;
+            const d3 = parseInt(document.getElementById('slider-d3').value) || 0;
+            const d4 = parseInt(document.getElementById('slider-d4').value) || 0;
+            const d5 = parseInt(document.getElementById('slider-d5').value) || 0;
+            const total = d1 + d2 + d3 + d4 + d5;
+            
+            document.getElementById('score-total').innerText = total;
+            
+            const gradeEl = document.getElementById('score-grade');
+            if (total >= 85) {
+                gradeEl.innerText = 'A';
+                gradeEl.style.color = '#16a34a';
+                gradeEl.style.background = 'rgba(22,163,74,0.1)';
+            } else if (total >= 65) {
+                gradeEl.innerText = 'B';
+                gradeEl.style.color = '#ca8a04';
+                gradeEl.style.background = 'rgba(202,138,4,0.1)';
+            } else {
+                gradeEl.innerText = 'C';
+                gradeEl.style.color = '#6b7280';
+                gradeEl.style.background = 'rgba(107,114,128,0.1)';
+            }
+        }
+
+        async function submitScore() {
+            if (!currentScoreItem) return;
+            
+            const reviewer = document.getElementById('score-reviewer').value.trim();
+            if (!reviewer) {
+                alert('Vui lòng nhập tên người chấm!');
+                return;
+            }
+            
+            // Phải xác định phòng đội nếu đang ở tab Overview
+            let phongDoi = currentScoreItem.phong_doi;
+            if (!phongDoi || phongDoi === 'overview') {
+                // Find in master data
+                for (const [key, dept] of Object.entries(masterData.departments)) {
+                    if (dept.items.find(item => item.ma === currentScoreItem.ma)) {
+                        phongDoi = key;
+                        break;
+                    }
+                }
+            }
+
+            const payload = {
+                action: 'score',
+                ma_sk: currentScoreItem.ma,
+                phong_doi: phongDoi || 'Khác',
+                d1_tinhmoi: parseInt(document.getElementById('slider-d1').value) || 0,
+                d2_tuchu: parseInt(document.getElementById('slider-d2').value) || 0,
+                d3_chiphi: parseInt(document.getElementById('slider-d3').value) || 0,
+                d4_kinhte: parseInt(document.getElementById('slider-d4').value) || 0,
+                d5_antoan: parseInt(document.getElementById('slider-d5').value) || 0,
+                nguoi_cham: reviewer,
+                ghi_chu: document.getElementById('score-notes').value.trim()
+            };
+            
+            if (!API_URL) {
+                alert('Chưa cấu hình API URL. Vui lòng paste URL Apps Script vào biến API_URL.');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-submit-score');
+            btn.disabled = true;
+            btn.innerText = '⏳ Đang lưu...';
+            
+            try {
+                const resp = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'text/plain'}, // Apps Script yêu cầu text/plain để bypass CORS
+                    body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+                
+                if (result.success) {
+                    alert('✅ ' + result.message);
+                    closeScoreModal();
+                    closeModal();
+                } else {
+                    alert('❌ ' + result.message);
+                }
+            } catch (err) {
+                alert('❌ Lỗi kết nối: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '💾 Lưu chấm điểm';
+            }
+        }
+
+
+        // === KANBAN ===
+        let currentTrackItem = null;
+
+        function renderKanban() {
+            const containerTodo = document.getElementById('kanban-todo');
+            const containerDoing = document.getElementById('kanban-doing');
+            const containerDone = document.getElementById('kanban-done');
+            
+            containerTodo.innerHTML = '';
+            containerDoing.innerHTML = '';
+            containerDone.innerHTML = '';
+            
+            let countTodo = 0, countDoing = 0, countDone = 0;
+            
+            // Lấy list sáng kiến từ masterData hoặc gsheetData
+            let allItems = [];
+            Object.values(masterData.departments).forEach(d => allItems.push(...d.items));
+            
+            // Filter by search query if any
+            const query = searchInput.value.toLowerCase().trim();
+            if (query) {
+                allItems = allItems.filter(item => 
+                    item.ten.toLowerCase().includes(query) ||
+                    item.ma.toLowerCase().includes(query) ||
+                    item.donvi.toLowerCase().includes(query)
+                );
+            }
+            
+            // Map tracking status
+            const trackMap = {};
+            if (gsheetData && gsheetData.tracking) {
+                gsheetData.tracking.forEach(t => {
+                    // Lấy record mới nhất
+                    if (!trackMap[t.ma_sk] || new Date(t.timestamp) > new Date(trackMap[t.ma_sk].timestamp)) {
+                        trackMap[t.ma_sk] = t;
+                    }
+                });
+            }
+            
+            allItems.forEach(item => {
+                const track = trackMap[item.ma] || {};
+                let status = track.trang_thai;
+                
+                // Trạng thái mặc định nếu chưa có tracking
+                if (!status) {
+                    const masterStatus = (gsheetData.master && gsheetData.master.find(m => m.ma_sk === item.ma)?.trang_thai) || 'chua_cham';
+                    status = masterStatus;
+                }
+                
+                if (status === 'huy') return; // Skip
+                
+                const progress = parseInt(track.tien_do) || 0;
+                const assignee = track.nguoi_phu_trach || 'Chưa phân công';
+                
+                const card = document.createElement('div');
+                card.className = 'kanban-card';
+                card.style.cssText = 'background: var(--bg-color); padding: 12px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);';
+                card.onclick = () => openTrackingModal(item, track);
+                
+                card.innerHTML = `
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                        <span>${item.ma}</span>
+                        <span>${item.donvi}</span>
+                    </div>
+                    <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${item.ten}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-secondary);">
+                        <span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>${assignee}</span>
+                        <span>${progress}%</span>
+                    </div>
+                    <div style="margin-top: 6px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
+                        <div style="height: 100%; width: ${progress}%; background: ${status==='hoan_thanh' ? '#2e7d32' : 'var(--primary)'};"></div>
+                    </div>
+                `;
+                
+                if (status === 'dang_tk') {
+                    containerDoing.appendChild(card);
+                    countDoing++;
+                } else if (status === 'hoan_thanh') {
+                    containerDone.appendChild(card);
+                    countDone++;
+                } else {
+                    containerTodo.appendChild(card);
+                    countTodo++;
+                }
+            });
+            
+            document.getElementById('count-todo').innerText = countTodo;
+            document.getElementById('count-doing').innerText = countDoing;
+            document.getElementById('count-done').innerText = countDone;
+        }
+
+        function openTrackingModal(item, track) {
+            currentTrackItem = { ma: item.ma, phong_doi: item.donvi };
+            document.getElementById('tracking-modal-sk').innerText = `${item.ma} — ${item.ten}`;
+            
+            document.getElementById('track-assignee').value = track.nguoi_phu_trach || '';
+            document.getElementById('track-start').value = track.ngay_bat_dau ? track.ngay_bat_dau.split('T')[0] : '';
+            document.getElementById('track-deadline').value = track.deadline ? track.deadline.split('T')[0] : '';
+            document.getElementById('track-progress').value = track.tien_do || 0;
+            document.getElementById('track-progress-val').innerText = track.tien_do || 0;
+            document.getElementById('track-status').value = track.trang_thai || 'chua_cham';
+            document.getElementById('track-note').value = track.ghi_chu || '';
+            
+            document.getElementById('tracking-modal').classList.add('active');
+        }
+
+        function closeTrackingModal() {
+            document.getElementById('tracking-modal').classList.remove('active');
+        }
+
+        async function submitTracking() {
+            if (!currentTrackItem) return;
+            
+            const payload = {
+                action: 'tracking',
+                ma_sk: currentTrackItem.ma,
+                phong_doi: currentTrackItem.phong_doi,
+                nguoi_phu_trach: document.getElementById('track-assignee').value,
+                ngay_bat_dau: document.getElementById('track-start').value,
+                deadline: document.getElementById('track-deadline').value,
+                tien_do: parseInt(document.getElementById('track-progress').value) || 0,
+                trang_thai: document.getElementById('track-status').value,
+                ghi_chu: document.getElementById('track-note').value
+            };
+            
+            if (!API_URL) {
+                alert('Chưa cấu hình API URL!');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-submit-track');
+            btn.disabled = true;
+            btn.innerText = '⏳ Đang lưu...';
+            
+            try {
+                const resp = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'text/plain'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+                
+                if (result.success) {
+                    alert('✅ ' + result.message);
+                    closeTrackingModal();
+                    
+                    // Reload data silently to update board
+                    try {
+                        const r2 = await fetch(API_URL + '?action=all');
+                        gsheetData = await r2.json();
+                        renderKanban();
+                    } catch (e) {}
+                    
+                } else {
+                    alert('❌ ' + result.message);
+                }
+            } catch (err) {
+                alert('❌ Lỗi kết nối: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '💾 Cập nhật';
+            }
+        }
+
+        function exportCSV() {
+            if (filteredData.length === 0) return;
+            
+            const headers = ['STT', 'Mã SK', 'Tên SK', 'Đơn vị', 'Điểm gốc', 'Độ phù hợp (Score)', 'Lý do', 'Trạng thái'];
+            let csvContent = headers.join(',') + '\n';
+            
+            filteredData.forEach(item => {
+                let status = item.hard_filtered ? 'Ngoài PCVT' : (item.need_review ? 'Cần Review' : 'Hợp lệ');
+                let row = [
+                    item.stt,
+                    item.ma,
+                    `"${item.ten.replace(/"/g, '""')}"`,
+                    `"${item.donvi.replace(/"/g, '""')}"`,
+                    item.diem || '',
+                    item.score,
+                    `"${item.explain.replace(/"/g, '""')}"`,
+                    status
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `PCVT_PhanLoai_${currentTab}_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            
+            const labels = [];
+            const dataValid = [];
+            const dataFiltered = [];
+            
+            Object.entries(masterData.departments).forEach(([key, dept]) => {
+                labels.push(key);
+                const filtered = dept.items.filter(i => i.hard_filtered).length;
+                dataValid.push(dept.items.length - filtered);
+                dataFiltered.push(filtered);
+            });
+            
+            Chart.defaults.color = '#4a5a6c';
+            Chart.defaults.font.family = 'Inter';
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sáng kiến hợp lệ PCVT',
+                            data: dataValid,
+                            backgroundColor: '#004B87',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Hard-filtered (Không thuộc PCVT)',
+                            data: dataFiltered,
+                            backgroundColor: '#e0e6ed',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1a2634',
+                            bodyColor: '#4a5a6c',
+                            borderColor: '#e0e6ed',
+                            borderWidth: 1,
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false, drawBorder: false } },
+                        y: { stacked: true, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false } }
+                    }
+                }
+            });
+        }
+
+        // Start App
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

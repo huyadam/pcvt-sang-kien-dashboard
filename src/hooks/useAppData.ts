@@ -55,8 +55,13 @@ export function useAppData() {
 
   const handleSubmitScore = async (payload: ScorePayload) => {
     const res = await api.submitScore(payload);
-    // Score updates status to 'da_cham' automatically by backend (or we could assume it)
-    // But we will prompt user for next status via StatusConfirmModal anyway
+    if (res.success) {
+      updateLocalStatus(payload.ma_sk, 'da_cham');
+      // Silently refresh scores in background
+      api.loadAll().then(data => {
+        setGsheetData(data);
+      }).catch(() => {});
+    }
     return res;
   };
 

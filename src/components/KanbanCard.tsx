@@ -4,10 +4,11 @@ import { SangKien, TrackingRecord } from '../types';
 interface KanbanCardProps {
   item: SangKien;
   track: TrackingRecord | null;
+  boardScore?: number;
   onClick: () => void;
 }
 
-export default function KanbanCard({ item, track, onClick }: KanbanCardProps) {
+export default function KanbanCard({ item, track, boardScore, onClick }: KanbanCardProps) {
   const progress = track?.tien_do || 0;
   
   // Progress color based on status
@@ -24,9 +25,16 @@ export default function KanbanCard({ item, track, onClick }: KanbanCardProps) {
         <span className="text-xs font-bold text-evn-orange dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded">
           {item.ma}
         </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]" title={item.donvi}>
-          {item.donvi}
-        </span>
+        <div className="flex items-center space-x-2">
+          {boardScore !== undefined && (
+            <span className="text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded">
+              {boardScore}đ
+            </span>
+          )}
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[90px]" title={item.donvi}>
+            {item.donvi}
+          </span>
+        </div>
       </div>
       
       <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-evn-blue dark:group-hover:text-blue-400 transition-colors">

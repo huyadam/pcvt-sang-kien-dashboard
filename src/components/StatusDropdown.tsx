@@ -16,9 +16,16 @@ export default function StatusDropdown({ maSk, currentStatus, onChange }: Status
     const newStatus = e.target.value as TrangThai;
     if (newStatus === currentStatus) return;
 
-    if (!confirm(`Bạn có chắc muốn chuyển Sáng kiến ${maSk} sang trạng thái: ${STATUS_MAP[newStatus].label}?`)) {
-      e.target.value = currentStatus;
-      return;
+    if (newStatus === 'dang_tk' && currentStatus === 'chua_xet') {
+      if (!confirm(`Sáng kiến ${maSk} CHƯA được chấm điểm.\nBạn có chắc chắn muốn chuyển thẳng sang trạng thái Triển khai không?`)) {
+        e.target.value = currentStatus;
+        return;
+      }
+    } else {
+      if (!confirm(`Bạn có chắc muốn chuyển Sáng kiến ${maSk} sang trạng thái: ${STATUS_MAP[newStatus]?.label || newStatus}?`)) {
+        e.target.value = currentStatus;
+        return;
+      }
     }
 
     setLoading(true);

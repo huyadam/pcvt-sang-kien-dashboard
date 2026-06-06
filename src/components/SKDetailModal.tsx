@@ -13,7 +13,13 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
 
+  const existingScore = appData?.gsheetData?.scores?.find((s: any) => s.ma_sk === item.ma);
+  const totalScore = existingScore 
+    ? (Number(existingScore.d1_tinhmoi) || 0) + (Number(existingScore.d2_tuchu) || 0) + (Number(existingScore.d3_chiphi) || 0) + (Number(existingScore.d4_kinhte) || 0) + (Number(existingScore.d5_antoan) || 0)
+    : 0;
+
   return (
+    <>
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm" onClick={onClose}></div>
@@ -102,13 +108,17 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                     </button>
                   )}
                   
-                  <button
-                    onClick={() => setShowScoreModal(true)}
-                    className="flex-1 flex items-center justify-center space-x-2 bg-evn-orange text-white px-4 py-2.5 rounded-md hover:bg-evn-orange-hover transition-colors font-medium shadow-sm"
-                  >
-                    <Edit size={18} />
-                    <span>Chấm điểm</span>
-                  </button>
+                  <button 
+                  onClick={() => setShowScoreModal(true)}
+                  className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    existingScore 
+                      ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' 
+                      : 'bg-evn-orange hover:bg-evn-orange-hover focus:ring-evn-orange'
+                  }`}
+                >
+                  <Edit size={18} />
+                  {existingScore ? `Đã chấm (${totalScore}đ)` : 'Chấm điểm'}
+                </button>
                 </div>
               </div>
 
@@ -137,14 +147,15 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
           </div>
         </div>
       </div>
+    </div>
 
-      {showScoreModal && (
+    {showScoreModal && (
         <ScoreModal 
           item={item} 
           onClose={() => setShowScoreModal(false)}
           appData={appData}
         />
       )}
-    </div>
+    </>
   );
 }

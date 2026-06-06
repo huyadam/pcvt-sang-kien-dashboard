@@ -58,12 +58,12 @@ export default function TrackingModal({ item, track, onClose, appData }: Trackin
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[60] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-200 dark:border-gray-700">
+        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-200 dark:border-gray-700 animate-fade-in relative z-[60]">
           
           <div className="bg-gradient-to-r from-evn-blue to-blue-700 px-6 py-4">
             <h3 className="text-lg font-bold text-white flex items-center space-x-2">

@@ -50,6 +50,17 @@ export const STATUS_MAP: Record<TrangThai, { label: string; cls: string; style?:
   khong_trien_khai: { label: '❌ Không TK', cls: 'danger', style: { color: '#d32f2f' } },
 };
 
+export function normalizeTrangThai(val: any): TrangThai {
+  if (!val) return 'chua_xet';
+  const s = String(val).trim().toLowerCase();
+  if (s === 'chua_cham') return 'chua_xet';
+  if (s === 'trien_khai') return 'dang_tk';
+  if (s === 'huy') return 'khong_trien_khai';
+  const validStates = ['chua_xet', 'da_cham', 'da_xet', 'dang_tk', 'hoan_thanh', 'khong_trien_khai'];
+  if (validStates.includes(s)) return s as TrangThai;
+  return 'chua_xet';
+}
+
 export function transformApiToMasterData(rows: any[]): MasterData {
   const departments: Record<string, any> = {};
 
@@ -74,7 +85,7 @@ export function transformApiToMasterData(rows: any[]): MasterData {
       need_review: false,
       gdrive_url: row.gdrive_url || '',
       source_dept: row.source_dept || '',
-      trang_thai: row.trang_thai || 'chua_xet',
+      trang_thai: normalizeTrangThai(row.trang_thai),
     });
     departments[deptKey].count = departments[deptKey].items.length;
   });

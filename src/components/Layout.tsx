@@ -150,7 +150,7 @@ export default function Layout({
                     <option value="all">Tất cả</option>
                     <option value="chua_xet">⏳ Chưa xét</option>
                     <option value="da_cham">✏️ Đã chấm</option>
-                    <option value="trien_khai">🚀 Triển khai</option>
+                    <option value="dang_tk">🚀 Triển khai</option>
                     <option value="hoan_thanh">✅ Hoàn thành</option>
                     <option value="khong_trien_khai">❌ Không TK</option>
                   </select>

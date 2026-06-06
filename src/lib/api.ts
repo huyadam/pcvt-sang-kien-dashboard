@@ -1,7 +1,7 @@
 import { GSheetData, ScorePayload, TrackingPayload } from '../types';
 
-// Use the API_URL from env or fallback if missing
-const API_URL = process.env.API_URL || '';
+// Use the API_URL from env or fallback to hardcoded public endpoint
+const API_URL = process.env.API_URL || 'https://script.google.com/macros/s/AKfycbzrd1hFpqoRtez24NMUM4J-R8xEoNlYFWx2F_qXU06fFO8snVkFg-I49oG7RckoOec/exec';
 
 export async function loadAll(): Promise<GSheetData> {
   if (!API_URL) {

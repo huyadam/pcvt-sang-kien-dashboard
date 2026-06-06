@@ -36,16 +36,18 @@ export function getXepLoai(total: number): 'A' | 'B' | 'C' {
   return 'C';
 }
 
-export const STATUS_MAP: Record<TrangThai, { label: string; cls: string; style?: string }> = {
-  chua_xet: { label: '⏳ Chưa xét', cls: 'warning', style: 'color:#ed6c02' },
-  chua_cham: { label: '⏳ Chưa xét', cls: 'warning', style: 'color:#ed6c02' },
-  da_cham: { label: '✏️ Đã chấm', cls: '', style: 'background:rgba(255,102,0,0.15);color:#e65c00' },
-  da_xet: { label: '✅ Đã xét', cls: '', style: 'background:rgba(0,75,135,0.12);color:var(--color-evn-blue)' },
-  dang_tk: { label: '🚀 Triển khai', cls: 'success', style: 'color:#2e7d32' },
-  trien_khai: { label: '🚀 Triển khai', cls: 'success', style: 'color:#2e7d32' },
-  hoan_thanh: { label: '✅ Hoàn thành', cls: 'success', style: 'color:#2e7d32' },
-  huy: { label: '❌ Không TK', cls: 'danger', style: 'color:#d32f2f' },
-  khong_trien_khai: { label: '❌ Không TK', cls: 'danger', style: 'color:#d32f2f' },
+import { CSSProperties } from 'react';
+
+export const STATUS_MAP: Record<TrangThai, { label: string; cls: string; style?: CSSProperties }> = {
+  chua_xet: { label: '⏳ Chưa xét', cls: 'warning', style: { color: '#ed6c02' } },
+  chua_cham: { label: '⏳ Chưa xét', cls: 'warning', style: { color: '#ed6c02' } },
+  da_cham: { label: '✏️ Đã chấm', cls: '', style: { background: 'rgba(255,102,0,0.15)', color: '#e65c00' } },
+  da_xet: { label: '✅ Đã xét', cls: '', style: { background: 'rgba(0,75,135,0.12)', color: 'var(--color-evn-blue)' } },
+  dang_tk: { label: '🚀 Triển khai', cls: 'success', style: { color: '#2e7d32' } },
+  trien_khai: { label: '🚀 Triển khai', cls: 'success', style: { color: '#2e7d32' } },
+  hoan_thanh: { label: '✅ Hoàn thành', cls: 'success', style: { color: '#2e7d32' } },
+  huy: { label: '❌ Không TK', cls: 'danger', style: { color: '#d32f2f' } },
+  khong_trien_khai: { label: '❌ Không TK', cls: 'danger', style: { color: '#d32f2f' } },
 };
 
 export function transformApiToMasterData(rows: any[]): MasterData {

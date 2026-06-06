@@ -38,12 +38,12 @@ export default function StatusConfirmModal({ maSk, phongDoi, total, grade, revie
   };
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto">
+    <div className="fixed inset-0 z-[70] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 text-center">
         <div className="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm" onClick={onClose}></div>
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700 animate-fade-in relative z-[70]">
           
           <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
             <h3 className="text-xl font-bold text-white flex items-center space-x-2">
@@ -59,7 +59,7 @@ export default function StatusConfirmModal({ maSk, phongDoi, total, grade, revie
 
             <div className="space-y-3">
               <button 
-                onClick={() => applyStatus('trien_khai')}
+                onClick={() => applyStatus('dang_tk')}
                 disabled={loadingStatus !== null}
                 className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all font-bold text-lg
                   ${grade === 'A' ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50 shadow-md transform hover:scale-[1.02]' 
@@ -67,7 +67,7 @@ export default function StatusConfirmModal({ maSk, phongDoi, total, grade, revie
               >
                 <span>🚀 Triển khai ngay</span>
                 {grade === 'A' && <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full uppercase">Đề xuất</span>}
-                {loadingStatus === 'trien_khai' && <span className="animate-spin ml-2">⏳</span>}
+                {loadingStatus === 'dang_tk' && <span className="animate-spin ml-2">⏳</span>}
               </button>
 
               <button 

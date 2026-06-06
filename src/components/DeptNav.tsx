@@ -1,5 +1,6 @@
 import React from 'react';
 import { Department } from '../types';
+import { sortDeptEntries } from '../lib/constants';
 
 interface DeptNavProps {
   departments: Record<string, Department>;
@@ -8,7 +9,8 @@ interface DeptNavProps {
 }
 
 export default function DeptNav({ departments, currentTab, onTabChange }: DeptNavProps) {
-  const depts = Object.entries(departments).sort((a, b) => a[0].localeCompare(b[0]));
+  // Sắp xếp theo thứ tự QĐ 09 thay vì alphabetical
+  const depts = sortDeptEntries(Object.entries(departments));
 
   const NavItem = ({ id, label, icon, badge }: { id: string, label: string, icon: string, badge?: number }) => {
     const isActive = currentTab === id;

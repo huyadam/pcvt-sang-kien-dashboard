@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Sun, Moon, Download, Search, Filter } from 'lucide-react';
+import { Menu, X, Sun, Moon, Download, Search, Filter, RefreshCw } from 'lucide-react';
 import DeptNav from './DeptNav';
 
 interface LayoutProps {
@@ -37,7 +37,7 @@ export default function Layout({
           '', // Tác giả chưa có trong data
           `"${dept.name}"`,
           item.diem,
-          item.diem >= 85 ? 'A' : (item.diem >= 65 ? 'B' : 'C'),
+          item.diem >= 8.5 ? 'A' : (item.diem >= 6.5 ? 'B' : 'C'),
           item.trang_thai
         ].join(',');
         csvContent += row + '\n';
@@ -125,42 +125,49 @@ export default function Layout({
 
           <div className="flex items-center space-x-2 sm:space-x-4">
             {currentTab !== 'overview' && currentTab !== 'tracking' && (
-              <>
-                <div className="relative hidden md:block">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={16} className="text-gray-400" />
+              <div className="flex items-center space-x-2">
+                <div className="relative w-32 sm:w-48">
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <Search size={14} className="text-gray-400" />
                   </div>
                   <input
                     type="text"
                     value={appData.searchQuery}
                     onChange={(e) => appData.setSearchQuery(e.target.value)}
-                    placeholder="Tìm kiếm..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue sm:text-sm"
+                    placeholder="Tìm..."
+                    className="block w-full pl-7 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue text-xs sm:text-sm"
                   />
                 </div>
-                <div className="relative hidden sm:block">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Filter size={16} className="text-gray-400" />
+                <div className="relative w-32 sm:w-48 hidden xs:block">
+                  <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                    <Filter size={14} className="text-gray-400" />
                   </div>
                   <select
                     value={appData.statusFilter}
                     onChange={(e) => appData.setStatusFilter(e.target.value)}
-                    className="block w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue sm:text-sm appearance-none"
+                    className="block w-full pl-7 sm:pl-10 pr-6 sm:pr-8 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue text-xs sm:text-sm appearance-none"
                   >
-                    <option value="all">Tất cả trạng thái</option>
-                    <option value="chua_xet">⏳ Chưa xét / Chưa chấm</option>
-                    <option value="da_cham">✏️ Đã chấm điểm</option>
+                    <option value="all">Tất cả</option>
+                    <option value="chua_xet">⏳ Chưa xét</option>
+                    <option value="da_cham">✏️ Đã chấm</option>
                     <option value="trien_khai">🚀 Triển khai</option>
                     <option value="hoan_thanh">✅ Hoàn thành</option>
-                    <option value="khong_trien_khai">❌ Không triển khai</option>
+                    <option value="khong_trien_khai">❌ Không TK</option>
                   </select>
                 </div>
-              </>
+              </div>
             )}
 
             <button
+              onClick={appData.refreshData}
+              className={`p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 ${appData.loading ? 'animate-spin text-evn-blue' : ''}`}
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw size={20} />
+            </button>
+            <button
               onClick={onToggleDark}
-              className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hidden sm:block"
               title="Đổi giao diện Sáng/Tối"
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}

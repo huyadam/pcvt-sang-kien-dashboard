@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
 import { MasterData } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { sortDeptEntries } from '../lib/constants';
 
 interface OverviewProps {
   masterData: MasterData | null;
+  isDark?: boolean;
 }
 
-export default function Overview({ masterData }: OverviewProps) {
+export default function Overview({ masterData, isDark = false }: OverviewProps) {
   if (!masterData) return null;
 
   const stats = useMemo(() => {
@@ -22,20 +24,20 @@ export default function Overview({ masterData }: OverviewProps) {
   }, [masterData]);
 
   const chartData = useMemo(() => {
-    return Object.entries(masterData.departments)
-      .map(([key, dept]) => {
-        let valid = 0, filtered = 0;
-        dept.items.forEach(item => {
-          if (item.hard_filtered) filtered++;
-          else valid++;
-        });
-        return {
-          name: dept.name,
-          valid,
-          filtered,
-        };
-      })
-      .sort((a, b) => (b.valid + b.filtered) - (a.valid + a.filtered));
+    // Sắp xếp theo QĐ 09 bằng sortDeptEntries
+    const sortedEntries = sortDeptEntries(Object.entries(masterData.departments));
+    return sortedEntries.map(([key, dept]) => {
+      let valid = 0, filtered = 0;
+      dept.items.forEach((item: any) => {
+        if (item.hard_filtered) filtered++;
+        else valid++;
+      });
+      return {
+        name: dept.name,
+        valid,
+        filtered,
+      };
+    });
   }, [masterData]);
 
   return (
@@ -74,16 +76,22 @@ export default function Overview({ masterData }: OverviewProps) {
                 angle={-45} 
                 textAnchor="end" 
                 height={100} 
-                tick={{ fill: '#6b7280', fontSize: 12 }}
+                tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
               />
-              <YAxis tick={{ fill: '#6b7280' }} />
+              <YAxis tick={{ fill: isDark ? '#9ca3af' : '#6b7280' }} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                itemStyle={{ color: '#1f2937', fontWeight: 500 }}
+                contentStyle={{ 
+                  backgroundColor: isDark ? '#1f2937' : '#fff', 
+                  borderRadius: '8px', 
+                  border: isDark ? '1px solid #374151' : 'none', 
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  color: isDark ? '#f3f4f6' : '#1f2937'
+                }}
+                itemStyle={{ color: isDark ? '#f3f4f6' : '#1f2937', fontWeight: 500 }}
               />
-              <Legend verticalAlign="top" height={36} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ color: isDark ? '#d1d5db' : '#374151' }} />
               <Bar dataKey="valid" name="Hợp lệ" stackId="a" fill="#004B87" radius={[0, 0, 4, 4]} />
-              <Bar dataKey="filtered" name="Loại" stackId="a" fill="#d1d5db" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="filtered" name="Loại" stackId="a" fill={isDark ? '#4b5563' : '#d1d5db'} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

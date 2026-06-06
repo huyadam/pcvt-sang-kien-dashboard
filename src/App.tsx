@@ -51,7 +51,7 @@ export default function App() {
 
   const renderContent = () => {
     if (currentTab === 'overview') {
-      return <Overview masterData={masterData} />;
+      return <Overview masterData={masterData} isDark={isDark} />;
     }
     if (currentTab === 'tracking') {
       return <KanbanBoard appData={appData} />;
@@ -68,7 +68,9 @@ export default function App() {
       onToggleDark={toggleDark}
       appData={appData}
     >
-      {renderContent()}
+      <div key={currentTab} className="animate-fade-in h-full">
+        {renderContent()}
+      </div>
     </Layout>
   );
 }

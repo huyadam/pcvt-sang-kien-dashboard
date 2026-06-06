@@ -1,14 +1,4 @@
-# Dependencies
-node_modules/
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# IDE
-.vscode/
-.idea/
-
-# Vercel
-.vercel/
+node_modules
+dist
+.env
+*.backup.html

@@ -1,0 +1,186 @@
+import React, { useState } from 'react';
+import { Menu, X, Sun, Moon, Download, Search, Filter } from 'lucide-react';
+import DeptNav from './DeptNav';
+
+interface LayoutProps {
+  children: React.ReactNode;
+  currentTab: string;
+  onTabChange: (tab: string) => void;
+  masterData: any;
+  isDark: boolean;
+  onToggleDark: () => void;
+  appData: any;
+}
+
+export default function Layout({
+  children,
+  currentTab,
+  onTabChange,
+  masterData,
+  isDark,
+  onToggleDark,
+  appData
+}: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleExportCSV = () => {
+    if (!masterData) return;
+    let csvContent = '\uFEFF'; // BOM
+    csvContent += 'Mã SK,Tên Sáng Kiến,Đơn Vị,Tác Giả,Phòng/Đội,Điểm AI,Xếp Loại,Trạng Thái\n';
+
+    Object.values(masterData.departments).forEach((dept: any) => {
+      dept.items.forEach((item: any) => {
+        const row = [
+          item.ma,
+          `"${item.ten.replace(/"/g, '""')}"`,
+          `"${item.donvi}"`,
+          '', // Tác giả chưa có trong data
+          `"${dept.name}"`,
+          item.diem,
+          item.diem >= 85 ? 'A' : (item.diem >= 65 ? 'B' : 'C'),
+          item.trang_thai
+        ].join(',');
+        csvContent += row + '\n';
+      });
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SangKien_PCVT_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 w-72 transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 lg:static lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } flex flex-col`}
+      >
+        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded bg-evn-blue flex items-center justify-center text-white font-bold">
+              EVN
+            </div>
+            <span className="font-semibold text-gray-900 dark:text-white truncate">
+              Sáng Kiến PCVT
+            </span>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <DeptNav
+            departments={masterData?.departments || {}}
+            currentTab={currentTab}
+            onTabChange={(tab) => {
+              onTabChange(tab);
+              setSidebarOpen(false);
+            }}
+          />
+        </div>
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+          Cập nhật: {masterData ? new Date(masterData.generated_at).toLocaleString('vi-VN') : '--'}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <header className="flex h-16 items-center justify-between px-4 sm:px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors">
+          <div className="flex items-center">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="mr-4 p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
+            >
+              <Menu size={24} />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white hidden sm:block">
+              {currentTab === 'overview'
+                ? 'Tổng quan Phân loại'
+                : currentTab === 'tracking'
+                ? 'Theo dõi Tiến độ'
+                : masterData?.departments[currentTab]?.name || 'Chi tiết'}
+            </h1>
+          </div>
+
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {currentTab !== 'overview' && currentTab !== 'tracking' && (
+              <>
+                <div className="relative hidden md:block">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search size={16} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={appData.searchQuery}
+                    onChange={(e) => appData.setSearchQuery(e.target.value)}
+                    placeholder="Tìm kiếm..."
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue sm:text-sm"
+                  />
+                </div>
+                <div className="relative hidden sm:block">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Filter size={16} className="text-gray-400" />
+                  </div>
+                  <select
+                    value={appData.statusFilter}
+                    onChange={(e) => appData.setStatusFilter(e.target.value)}
+                    className="block w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue sm:text-sm appearance-none"
+                  >
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="chua_xet">⏳ Chưa xét / Chưa chấm</option>
+                    <option value="da_cham">✏️ Đã chấm điểm</option>
+                    <option value="trien_khai">🚀 Triển khai</option>
+                    <option value="hoan_thanh">✅ Hoàn thành</option>
+                    <option value="khong_trien_khai">❌ Không triển khai</option>
+                  </select>
+                </div>
+              </>
+            )}
+
+            <button
+              onClick={onToggleDark}
+              className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Đổi giao diện Sáng/Tối"
+            >
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center space-x-1 p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Xuất CSV"
+            >
+              <Download size={20} />
+              <span className="hidden sm:inline text-sm font-medium">Xuất CSV</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main Area */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 animate-fade-in">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

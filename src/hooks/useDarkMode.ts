@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 
 export function useDarkMode() {
   const [isDark, setIsDark] = useState(() => {
-    return localStorage.getItem('pcvt-theme') === 'dark';
+    const saved = localStorage.getItem('pcvt-theme');
+    if (saved !== null) return saved === 'dark';
+    return false; // Mặc định là light
   });
 
   useEffect(() => {

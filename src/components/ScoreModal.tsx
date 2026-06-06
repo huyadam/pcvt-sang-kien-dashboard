@@ -126,12 +126,12 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
             {showGuide && (
               <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800 text-sm text-blue-900 dark:text-blue-200 space-y-2 animate-fade-in">
                 <h4 className="font-bold border-b border-blue-200 dark:border-blue-800 pb-2 mb-2">Hướng dẫn Chấm điểm & Xếp loại</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Tính mới (30đ)</strong>: Giải pháp có ý tưởng mới so với hiện trạng? Mức độ sáng tạo?</li>
-                  <li><strong>Tự chủ nguồn lực (15đ)</strong>: Có thể tự triển khai bằng nhân lực/vật tư nội bộ mà không cần thuê ngoài?</li>
-                  <li><strong>Tiết kiệm chi phí (15đ)</strong>: So với phương án cũ, giúp đơn vị tiết kiệm chi phí/vật tư không?</li>
-                  <li><strong>Hiệu quả kinh tế (20đ)</strong>: Mang lại giá trị kinh tế cụ thể, tăng doanh thu hoặc giảm tổn thất?</li>
-                  <li><strong>An toàn - Dịch vụ (20đ)</strong>: Cải thiện an toàn lao động, độ tin cậy cung cấp điện, hoặc chất lượng DVKH?</li>
+                <ul className="list-disc pl-5 space-y-2 text-xs mt-2">
+                  <li><strong>Tính mới (30đ)</strong>: Giải pháp đột phá hoàn toàn (25-30đ) | Có cải tiến quy trình cũ (15-24đ) | Thay đổi nhỏ (&lt;15đ).</li>
+                  <li><strong>Tự chủ nguồn lực (15đ)</strong>: Tự làm 100% bằng nội bộ (13-15đ) | Cần mua vật tư (8-12đ) | Phải thuê ngoài (&lt;8đ).</li>
+                  <li><strong>Tiết kiệm chi phí (15đ)</strong>: Tiết kiệm lớn &gt;50tr (13-15đ) | Tiết kiệm từ 10-50tr (8-12đ) | Không đáng kể (&lt;8đ).</li>
+                  <li><strong>Hiệu quả kinh tế (20đ)</strong>: Tăng doanh thu / giảm tổn thất cực lớn (16-20đ) | Mức độ khá (10-15đ) | Chưa đo đếm được (&lt;10đ).</li>
+                  <li><strong>An toàn - Dịch vụ (20đ)</strong>: Giải quyết triệt để rủi ro an toàn hoặc dịch vụ KH (16-20đ) | Có cải thiện (10-15đ) | Rất ít (&lt;10đ).</li>
                 </ul>
                 <div className="pt-2 flex gap-4 font-bold">
                   <span className="text-green-600 dark:text-green-400">Loại A: ≥85đ</span>

@@ -15,13 +15,23 @@ export function useAppData() {
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
 
   const loadData = async () => {
-    setLoading(true);
+    const cached = localStorage.getItem('pcvt_sk_cache');
+    if (cached && !masterData) {
+      try {
+        const parsed = JSON.parse(cached);
+        setGsheetData(parsed);
+        setMasterData(transformApiToMasterData(parsed.master || []));
+      } catch(e) {}
+    } else {
+      setLoading(true);
+    }
+    
     setError(null);
     try {
       const data = await api.loadAll();
       setGsheetData(data);
-      const transformed = transformApiToMasterData(data.master || []);
-      setMasterData(transformed);
+      setMasterData(transformApiToMasterData(data.master || []));
+      localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
     } catch (err: any) {
       setError(err.message || 'Lỗi tải dữ liệu');
     } finally {
@@ -54,27 +64,37 @@ export function useAppData() {
   };
 
   const handleSubmitScore = async (payload: ScorePayload) => {
-    const res = await api.submitScore(payload);
-    if (res.success) {
-      updateLocalStatus(payload.ma_sk, 'da_cham');
-      // Silently refresh scores in background
-      api.loadAll().then(data => {
-        setGsheetData(data);
-      }).catch(() => {});
-    }
-    return res;
+    // Optimistic UI Update: Cập nhật local ngay lập tức
+    updateLocalStatus(payload.ma_sk, 'da_cham');
+    
+    // Gửi API ngầm trong background (fire-and-forget)
+    api.submitScore(payload).then(res => {
+      if (res.success) {
+        api.loadAll().then(data => {
+          setGsheetData(data);
+          localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+        }).catch(() => {});
+      }
+    }).catch(err => console.error("Lỗi gửi điểm:", err));
+
+    return { success: true, message: "Đã lưu điểm thành công" };
   };
 
   const handleSubmitTracking = async (payload: TrackingPayload) => {
-    const res = await api.submitTracking(payload);
-    if (res.success) {
-      updateLocalStatus(payload.ma_sk, payload.trang_thai);
-      // Silently refresh tracking data in background
-      api.loadAll().then(data => {
-        setGsheetData(data);
-      }).catch(() => {});
-    }
-    return res;
+    // Optimistic UI Update: Cập nhật local ngay lập tức
+    updateLocalStatus(payload.ma_sk, payload.trang_thai);
+    
+    // Gửi API ngầm trong background
+    api.submitTracking(payload).then(res => {
+      if (res.success) {
+        api.loadAll().then(data => {
+          setGsheetData(data);
+          localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+        }).catch(() => {});
+      }
+    }).catch(err => console.error("Lỗi cập nhật tiến độ:", err));
+
+    return { success: true, message: "Đã cập nhật trạng thái thành công" };
   };
 
   const quickStatusChange = async (maSk: string, newStatus: TrangThai) => {
@@ -90,17 +110,25 @@ export function useAppData() {
         }
       }
     }
-    const res = await api.submitTracking({
+    // Optimistic UI
+    updateLocalStatus(maSk, newStatus);
+
+    api.submitTracking({
       action: 'tracking',
       ma_sk: maSk,
       phong_doi: phongDoi,
       trang_thai: newStatus,
       ghi_chu: 'Chuyển trạng thái thủ công'
-    });
-    if (res.success) {
-      updateLocalStatus(maSk, newStatus);
-    }
-    return res;
+    }).then(res => {
+      if (res.success) {
+        api.loadAll().then(data => {
+          setGsheetData(data);
+          localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+        }).catch(() => {});
+      }
+    }).catch(err => console.error(err));
+
+    return { success: true, message: "Đã cập nhật trạng thái" };
   };
 
   return {

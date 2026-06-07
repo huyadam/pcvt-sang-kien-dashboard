@@ -20,13 +20,44 @@ export function useAppData(user: User | null) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
 
+  const injectDynamicStatus = (master: any, scores: any[], tracking: any[]) => {
+    const tMap = new Map<string, string>();
+    if (tracking) {
+      tracking.forEach((t: any) => {
+        const existTime = tMap.get(t.ma_sk + '_time');
+        const tTime = new Date(t.timestamp).getTime();
+        if (!existTime || tTime > Number(existTime)) {
+          tMap.set(t.ma_sk, t.trang_thai);
+          tMap.set(t.ma_sk + '_time', String(tTime));
+        }
+      });
+    }
+    
+    const sMap = new Set<string>();
+    if (scores) {
+      scores.forEach((s: any) => sMap.add(s.ma_sk));
+    }
+    
+    Object.values(master.departments).forEach((dept: any) => {
+      dept.items.forEach((item: any) => {
+        if (tMap.has(item.ma)) {
+          item.trang_thai = tMap.get(item.ma);
+        } else if (sMap.has(item.ma) && item.trang_thai === 'chua_xet') {
+          item.trang_thai = 'da_cham';
+        }
+      });
+    });
+    return master;
+  };
+
   const loadData = async () => {
     const cached = localStorage.getItem('pcvt_sk_cache');
     if (cached && !masterData) {
       try {
         const parsed = JSON.parse(cached);
         setGsheetData(parsed);
-        setMasterData(transformApiToMasterData(parsed.master || []));
+        const master = transformApiToMasterData(parsed.master || []);
+        setMasterData(injectDynamicStatus(master, parsed.scores, parsed.tracking));
       } catch(e) {}
     } else {
       setLoading(true);
@@ -36,7 +67,10 @@ export function useAppData(user: User | null) {
     try {
       const data = await api.loadAll();
       setGsheetData(data);
-      setMasterData(transformApiToMasterData(data.master || []));
+      
+      const master = transformApiToMasterData(data.master || []);
+      setMasterData(injectDynamicStatus(master, data.scores, data.tracking));
+      
       localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
     } catch (err: any) {
       setError(err.message || 'Lỗi tải dữ liệu');

@@ -32,17 +32,22 @@ export function canEditDept(user: User, targetDeptName: string): boolean {
   if (user.role === 'admin') return true;
   if (!targetDeptName || !user.deptKey) return false;
   
-  const targetLower = targetDeptName.toLowerCase();
-  const userDeptLower = user.deptKey.toLowerCase();
+  const targetLower = targetDeptName.toLowerCase().trim();
+  const userDeptLower = user.deptKey.toLowerCase().trim();
   
   if (targetLower.includes(userDeptLower) || userDeptLower.includes(targetLower)) return true;
   
-  // Kiểm tra bằng aliases
+  // Kiểm tra bằng aliases & username
   const account = ACCOUNTS.find(a => a.username === user.username);
-  if (account && account.aliases) {
-    for (const alias of account.aliases) {
-      if (targetLower.includes(alias.toLowerCase()) || alias.toLowerCase().includes(targetLower)) {
-        return true;
+  if (account) {
+    if (targetLower === account.username.toLowerCase()) return true;
+    
+    if (account.aliases) {
+      for (const alias of account.aliases) {
+        const aliasLower = alias.toLowerCase().trim();
+        if (targetLower.includes(aliasLower) || aliasLower.includes(targetLower)) {
+          return true;
+        }
       }
     }
   }

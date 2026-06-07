@@ -6,7 +6,7 @@ const SESSION_KEY = 'pcvt_sk_user';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = sessionStorage.getItem(SESSION_KEY);
+    const saved = localStorage.getItem(SESSION_KEY);
     if (saved) {
       try { return JSON.parse(saved); } catch { return null; }
     }
@@ -17,7 +17,7 @@ export function useAuth() {
     const u = authenticate(username, password);
     if (u) {
       setUser(u);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(u));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(u));
       return true;
     }
     return false;
@@ -25,7 +25,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     setUser(null);
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
     // Xóa cache localStorage để phòng ban này đăng xuất vào phòng ban khác không bị cache cũ
     localStorage.removeItem('pcvt_sk_cache');
   }, []);

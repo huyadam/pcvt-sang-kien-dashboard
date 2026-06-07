@@ -1,14 +1,15 @@
 import React from 'react';
-import { Department } from '../types';
+import { Department, User } from '../types';
 import { sortDeptEntries } from '../lib/constants';
 
 interface DeptNavProps {
   departments: Record<string, Department>;
   currentTab: string;
   onTabChange: (tab: string) => void;
+  user: User;
 }
 
-export default function DeptNav({ departments, currentTab, onTabChange }: DeptNavProps) {
+export default function DeptNav({ departments, currentTab, onTabChange, user }: DeptNavProps) {
   // Sắp xếp theo thứ tự QĐ 09 thay vì alphabetical
   const depts = sortDeptEntries(Object.entries(departments));
 
@@ -44,16 +45,38 @@ export default function DeptNav({ departments, currentTab, onTabChange }: DeptNa
 
   return (
     <nav className="flex flex-col py-4">
-      <NavItem id="overview" label="Tổng quan" icon="📊" />
+      {user.role === 'admin' && (
+        <NavItem id="overview" label="Tổng quan" icon="📊" />
+      )}
       <NavItem id="tracking" label="Theo dõi Tiến độ" icon="📈" />
       
       <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>
       
+      {user.role === 'dept' && (
+        <>
+          <div className="px-4 mb-2 text-xs font-semibold text-evn-orange uppercase tracking-wider flex items-center space-x-1">
+            <span>📍 Phòng của tôi</span>
+          </div>
+          {depts.filter(([k]) => k.includes(user.deptKey) || user.deptKey.includes(k)).map(([key, dept]) => (
+            <NavItem
+              key={key}
+              id={key}
+              label={dept.name}
+              icon="★"
+              badge={dept.count}
+            />
+          ))}
+          <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>
+        </>
+      )}
+
       <div className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-        Phòng / Đội
+        {user.role === 'admin' ? 'Phòng / Đội' : 'Phòng / Đội khác'}
       </div>
       
-      {depts.map(([key, dept]) => (
+      {depts
+        .filter(([k]) => user.role === 'admin' || (!k.includes(user.deptKey) && !user.deptKey.includes(k)))
+        .map(([key, dept]) => (
         <NavItem
           key={key}
           id={key}

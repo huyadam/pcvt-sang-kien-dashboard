@@ -5,10 +5,11 @@ import { STATUS_MAP } from '../lib/utils';
 interface StatusDropdownProps {
   maSk: string;
   currentStatus: TrangThai;
-  onChange: (maSk: string, newStatus: TrangThai) => Promise<any>;
+  onChange: (maSk: string, newStatus: TrangThai) => Promise<{success: boolean; message: string}>;
+  disabled?: boolean;
 }
 
-export default function StatusDropdown({ maSk, currentStatus, onChange }: StatusDropdownProps) {
+export default function StatusDropdown({ maSk, currentStatus, onChange, disabled = false }: StatusDropdownProps) {
   const [loading, setLoading] = useState(false);
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,6 +43,18 @@ export default function StatusDropdown({ maSk, currentStatus, onChange }: Status
       setLoading(false);
     }
   };
+
+  if (disabled) {
+    const statusInfo = STATUS_MAP[currentStatus] || STATUS_MAP.chua_xet;
+    return (
+      <span
+        className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-md border border-transparent whitespace-nowrap"
+        style={statusInfo.style}
+      >
+        {statusInfo.label}
+      </span>
+    );
+  }
 
   const currentDef = STATUS_MAP[currentStatus] || STATUS_MAP['chua_xet'];
 

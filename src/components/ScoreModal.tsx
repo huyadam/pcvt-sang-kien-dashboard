@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SangKien, ScorePayload, TrangThai } from '../types';
 import { getXepLoai } from '../lib/utils';
+import { canEditDept } from '../lib/auth';
 
 interface ScoreModalProps {
   item: SangKien;
@@ -9,6 +10,7 @@ interface ScoreModalProps {
 }
 
 export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) {
+  const { user, masterData } = appData;
   const [scores, setScores] = useState({ d1: 15, d2: 8, d3: 8, d4: 10, d5: 10 });
   const [reviewer, setReviewer] = useState('');
   const [notes, setNotes] = useState('');
@@ -105,6 +107,8 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
     setScores(prev => ({ ...prev, [key]: v }));
   };
 
+  const hasPermission = user && canEditDept(user, item.source_dept || masterData?.departments[item.donvi]?.name || item.donvi);
+
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -169,7 +173,6 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Cột trái: Chấm điểm */}
               <div className="space-y-4">
                 <h4 className="font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2">1. Đánh giá Tiêu chí</h4>
                 {[
@@ -227,7 +230,6 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
                 </div>
               </div>
 
-              {/* Cột phải: Xử lý tiếp theo */}
               <div className="space-y-4">
                 <h4 className="font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2">2. Đề xuất Xử lý</h4>
                 
@@ -331,13 +333,19 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
             >
               Hủy
             </button>
-            <button 
-              onClick={handleSubmit} 
-              disabled={submitting}
-              className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-evn-orange hover:bg-evn-orange-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-evn-orange disabled:opacity-50 flex items-center"
-            >
-              {submitting ? 'Đang lưu...' : '💾 Lưu & Xử lý'}
-            </button>
+            {hasPermission ? (
+              <button 
+                onClick={handleSubmit} 
+                disabled={submitting}
+                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-evn-orange hover:bg-evn-orange-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-evn-orange disabled:opacity-50 flex items-center"
+              >
+                {submitting ? 'Đang lưu...' : '💾 Lưu & Xử lý'}
+              </button>
+            ) : (
+              <div className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md cursor-not-allowed text-sm font-medium">
+                Không có quyền chỉnh sửa
+              </div>
+            )}
           </div>
         </div>
       </div>

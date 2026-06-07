@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, X, Sun, Moon, Download, Search, Filter, RefreshCw } from 'lucide-react';
 import DeptNav from './DeptNav';
+import { User } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,8 @@ interface LayoutProps {
   isDark: boolean;
   onToggleDark: () => void;
   appData: any;
+  user: User;
+  onLogout: () => void;
 }
 
 export default function Layout({
@@ -19,7 +22,9 @@ export default function Layout({
   masterData,
   isDark,
   onToggleDark,
-  appData
+  appData,
+  user,
+  onLogout
 }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -87,7 +92,7 @@ export default function Layout({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto mt-4 px-2 custom-scrollbar pb-6">
           <DeptNav
             departments={masterData?.departments || {}}
             currentTab={currentTab}
@@ -95,11 +100,29 @@ export default function Layout({
               onTabChange(tab);
               setSidebarOpen(false);
             }}
+            user={user}
           />
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-          Cập nhật: {masterData ? new Date(masterData.generated_at).toLocaleString('vi-VN') : '--'}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+          <div className="flex items-center space-x-3 mb-3 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="w-8 h-8 bg-evn-blue text-white rounded-full flex items-center justify-center font-bold">
+              {user.role === 'admin' ? 'A' : 'P'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{user.displayName}</p>
+              <p className="text-xs text-gray-500 truncate">{user.username}</p>
+            </div>
+          </div>
+          <button 
+            onClick={onLogout}
+            className="w-full flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none transition-colors"
+          >
+            🔓 Đăng xuất
+          </button>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 text-center">
+            Cập nhật: {masterData?.generated_at ? new Date(masterData.generated_at).toLocaleString('vi-VN') : 'Đang tải...'}
+          </p>
         </div>
       </aside>
 

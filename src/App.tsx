@@ -1,14 +1,17 @@
 import React from 'react';
 import { useAppData } from './hooks/useAppData';
 import { useDarkMode } from './hooks/useDarkMode';
+import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
+import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import DeptTable from './components/DeptTable';
 import KanbanBoard from './components/KanbanBoard';
 
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
-  const appData = useAppData();
+  const { user, isAuthenticated, login, logout } = useAuth();
+  const appData = useAppData(user);
 
   const {
     loading,
@@ -19,6 +22,10 @@ export default function App() {
     setCurrentTab,
     refreshData,
   } = appData;
+
+  if (!isAuthenticated || !user) {
+    return <LoginPage onLogin={login} />;
+  }
 
   if (loading && !masterData) {
     return (
@@ -67,6 +74,8 @@ export default function App() {
       isDark={isDark}
       onToggleDark={toggleDark}
       appData={appData}
+      user={user}
+      onLogout={logout}
     >
       <div key={currentTab} className="animate-fade-in h-full">
         {renderContent()}

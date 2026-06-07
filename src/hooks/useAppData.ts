@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
-import { GSheetData, MasterData, ScorePayload, TrackingPayload, TrangThai } from '../types';
+import { GSheetData, MasterData, ScorePayload, TrackingPayload, TrangThai, User } from '../types';
 import * as api from '../lib/api';
 import { transformApiToMasterData } from '../lib/utils';
+import { canEditDept } from '../lib/auth';
 
-export function useAppData() {
+export function useAppData(user: User | null) {
   const [masterData, setMasterData] = useState<MasterData | null>(null);
   const [gsheetData, setGsheetData] = useState<GSheetData>({ master: [], scores: [], tracking: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [currentTab, setCurrentTab] = useState('overview');
+  const [currentTab, setCurrentTab] = useState(() => {
+    if (!user) return 'overview';
+    if (user.role === 'admin') return 'overview';
+    return user.deptKey || 'overview';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
@@ -64,6 +69,10 @@ export function useAppData() {
   };
 
   const handleSubmitScore = async (payload: ScorePayload) => {
+    if (user && !canEditDept(user, payload.phong_doi)) {
+      return { success: false, message: 'Bạn không có quyền chấm điểm sáng kiến phòng đội khác' };
+    }
+
     // Optimistic UI Update: Cập nhật local ngay lập tức
     updateLocalStatus(payload.ma_sk, 'da_cham');
     
@@ -81,6 +90,10 @@ export function useAppData() {
   };
 
   const handleSubmitTracking = async (payload: TrackingPayload) => {
+    if (user && !canEditDept(user, payload.phong_doi)) {
+      return { success: false, message: 'Bạn không có quyền cập nhật tiến độ sáng kiến phòng đội khác' };
+    }
+
     // Optimistic UI Update: Cập nhật local ngay lập tức
     updateLocalStatus(payload.ma_sk, payload.trang_thai);
     
@@ -110,6 +123,10 @@ export function useAppData() {
         }
       }
     }
+    if (user && !canEditDept(user, phongDoi)) {
+      return { success: false, message: 'Bạn không có quyền đổi trạng thái sáng kiến phòng đội khác' };
+    }
+
     // Optimistic UI
     updateLocalStatus(maSk, newStatus);
 

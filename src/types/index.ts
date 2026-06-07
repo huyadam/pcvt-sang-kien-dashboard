@@ -71,3 +71,17 @@ export interface GSheetData {
   scores: any[];
   tracking: TrackingRecord[];
 }
+
+export type UserRole = 'admin' | 'dept';
+
+export interface User {
+  username: string;
+  displayName: string;
+  role: UserRole;
+  deptKey: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+}

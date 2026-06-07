@@ -8,7 +8,13 @@ interface KanbanBoardProps {
 }
 
 export default function KanbanBoard({ appData }: KanbanBoardProps) {
-  const { masterData, gsheetData, searchQuery } = appData;
+  const { masterData, gsheetData, searchQuery, user } = appData;
+  const [selectedDept, setSelectedDept] = useState<string>(() => {
+    if (user && user.role === 'dept' && user.deptKey) {
+      return user.deptKey;
+    }
+    return 'all';
+  });
   const [selectedItem, setSelectedItem] = useState<{ item: SangKien, track: TrackingRecord | null } | null>(null);
 
   const { trackMap, scoreMap, colItems } = useMemo(() => {
@@ -34,8 +40,10 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     // 2. Collect all valid items
     let all: SangKien[] = [];
     if (masterData) {
-      Object.values(masterData.departments).forEach((dept: any) => {
-        all = all.concat(dept.items);
+      Object.entries(masterData.departments).forEach(([key, dept]: [string, any]) => {
+        if (selectedDept === 'all' || key === selectedDept) {
+          all = all.concat(dept.items);
+        }
       });
     }
 
@@ -70,7 +78,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     });
 
     return { trackMap: tMap, scoreMap: sMap, colItems: cols };
-  }, [masterData, gsheetData, searchQuery]);
+  }, [masterData, gsheetData, searchQuery, selectedDept]);
 
   const isEmpty = colItems.da_cham.length === 0 && colItems.dang_tk.length === 0 && colItems.hoan_thanh.length === 0 && colItems.khong_trien_khai.length === 0;
 

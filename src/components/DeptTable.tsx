@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { SangKien } from '../types';
 import StatusDropdown from './StatusDropdown';
 import SKDetailModal from './SKDetailModal';
+import { canEditDept } from '../lib/auth';
 
 interface DeptTableProps {
   deptKey: string;
@@ -9,7 +10,7 @@ interface DeptTableProps {
 }
 
 export default function DeptTable({ deptKey, appData }: DeptTableProps) {
-  const { masterData, searchQuery, statusFilter, sortConfig, setSortConfig, quickStatusChange } = appData;
+  const { masterData, searchQuery, statusFilter, sortConfig, setSortConfig, quickStatusChange, user } = appData;
   const [selectedSK, setSelectedSK] = useState<SangKien | null>(null);
 
   const deptData = masterData?.departments[deptKey];
@@ -48,8 +49,17 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
 
   if (!deptData) return <div className="p-4 text-center text-gray-500">Không tìm thấy phòng/đội</div>;
 
+  const canEdit = user ? canEditDept(user, deptKey) : false;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      {!canEdit && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border-b border-yellow-200 dark:border-yellow-800 p-4">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ Bạn đang xem dữ liệu của phòng đội khác. Tính năng chấm điểm và cập nhật tiến độ đã bị vô hiệu hóa.
+          </p>
+        </div>
+      )}
       <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Danh sách Sáng kiến: {deptData.name}
@@ -133,6 +143,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                       maSk={item.ma} 
                       currentStatus={item.trang_thai} 
                       onChange={quickStatusChange} 
+                      disabled={!canEdit}
                     />
                   </td>
                 </tr>

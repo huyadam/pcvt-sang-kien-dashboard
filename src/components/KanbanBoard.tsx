@@ -3,6 +3,8 @@ import { SangKien, TrackingRecord } from '../types';
 import KanbanCard from './KanbanCard';
 import TrackingModal from './TrackingModal';
 
+import { canEditDept } from '../lib/auth';
+
 interface KanbanBoardProps {
   appData: any;
 }
@@ -16,6 +18,17 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     return 'all';
   });
   const [selectedItem, setSelectedItem] = useState<{ item: SangKien, track: TrackingRecord | null } | null>(null);
+
+  // Helper: kiểm tra department key có match với selected dept không (hỗ trợ alias)
+  const isDeptMatch = (deptKey: string, selected: string): boolean => {
+    if (selected === 'all') return true;
+    if (deptKey === selected) return true;
+    // Dùng canEditDept để check alias (ví dụ KTAT <-> Kỹ thuật An toàn)
+    if (user) return canEditDept({ ...user, deptKey: selected }, deptKey);
+    // Fallback: so sánh lowercase contains
+    return deptKey.toLowerCase().includes(selected.toLowerCase()) || 
+           selected.toLowerCase().includes(deptKey.toLowerCase());
+  };
 
   const { trackMap, scoreMap, colItems } = useMemo(() => {
     // 1. Build track map
@@ -41,7 +54,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     let all: SangKien[] = [];
     if (masterData) {
       Object.entries(masterData.departments).forEach(([key, dept]: [string, any]) => {
-        if (selectedDept === 'all' || key === selectedDept) {
+        if (isDeptMatch(key, selectedDept)) {
           all = all.concat(dept.items);
         }
       });

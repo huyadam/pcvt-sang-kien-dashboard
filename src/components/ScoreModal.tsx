@@ -110,7 +110,17 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
     setScores(prev => ({ ...prev, [key]: v }));
   };
 
-  const hasPermission = user && canEditDept(user, item.source_dept || masterData?.departments[item.donvi]?.name || item.donvi);
+  // Tìm đúng phongDoi key từ masterData.departments
+  let phongDoi = item.source_dept || '';
+  if (!phongDoi && masterData) {
+    for (const [key, dept] of Object.entries(masterData.departments)) {
+      if ((dept as any).items.find((i: any) => i.ma === item.ma)) {
+        phongDoi = key;
+        break;
+      }
+    }
+  }
+  const hasPermission = user && canEditDept(user, phongDoi || item.donvi);
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">

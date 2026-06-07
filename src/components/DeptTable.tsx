@@ -72,11 +72,11 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '50px' }} />
-            <col style={{ width: '100px' }} />
-            <col style={{ width: '45%' }} />
-            <col style={{ width: '100px' }} />
+            <col style={{ width: '40px' }} />
             <col style={{ width: '90px' }} />
+            <col />
+            <col style={{ width: '70px' }} />
+            <col style={{ width: '80px' }} />
             <col style={{ width: '140px' }} />
           </colgroup>
           <thead className="bg-gray-50 dark:bg-gray-900">

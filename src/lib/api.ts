@@ -53,3 +53,14 @@ export async function submitTracking(payload: TrackingPayload): Promise<{ succes
   });
   return await resp.json();
 }
+
+export async function deleteScore(maSk: string): Promise<{ success: boolean; message: string }> {
+  if (!API_URL) throw new Error('Chưa cấu hình API URL');
+
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'deleteScore', ma_sk: maSk }),
+  });
+  return await resp.json();
+}

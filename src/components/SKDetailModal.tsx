@@ -109,37 +109,52 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                   </div>
                 </div>
 
-                <div className="flex space-x-3">
+                <div className="flex space-x-2">
                   {item.gdrive_url ? (
                     <button
                       onClick={() => setShowPdf(!showPdf)}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+                      className="flex-1 flex items-center justify-center space-x-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
                     >
-                      <FileText size={18} />
-                      <span>{showPdf ? 'Đóng Tài liệu' : 'Xem Tài liệu gốc'}</span>
+                      <FileText size={16} />
+                      <span>{showPdf ? 'Đóng' : 'Tài liệu'}</span>
                     </button>
                   ) : (
-                    <button disabled className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 px-4 py-2.5 rounded-md cursor-not-allowed">
-                      <FileText size={18} />
+                    <button disabled className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 px-3 py-2.5 rounded-md cursor-not-allowed text-sm">
+                      <FileText size={16} />
                       <span>Không có File</span>
                     </button>
                   )}
                   
                   <button 
-                  onClick={() => setShowScoreModal(true)}
-                  disabled={!canEdit}
-                  className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    !canEdit 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
-                      : existingScore 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500' 
-                        : 'bg-evn-orange hover:bg-evn-orange-hover text-white focus:ring-evn-orange'
-                  }`}
-                  title={!canEdit ? "Bạn không có quyền chấm điểm sáng kiến của phòng đội khác" : ""}
-                >
-                  <Edit size={18} />
-                  {existingScore ? `Đã chấm (${totalScore}đ)` : 'Chấm điểm'}
-                </button>
+                    onClick={() => setShowScoreModal(true)}
+                    disabled={!canEdit}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      !canEdit 
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                        : existingScore 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500' 
+                          : 'bg-evn-orange hover:bg-evn-orange-hover text-white focus:ring-evn-orange'
+                    }`}
+                    title={!canEdit ? 'Không có quyền' : ''}
+                  >
+                    <Edit size={16} />
+                    <span>{existingScore ? `Sửa (${totalScore}đ)` : 'Chấm điểm'}</span>
+                  </button>
+
+                  {existingScore && canEdit && (
+                    <button
+                      onClick={() => {
+                        if (confirm('Bạn có chắc muốn xóa điểm của sáng kiến này?')) {
+                          appData.handleDeleteScore(item.ma);
+                        }
+                      }}
+                      className="flex items-center justify-center space-x-1 px-3 py-2.5 border border-red-300 dark:border-red-700 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                      title="Xóa điểm đã chấm"
+                    >
+                      <X size={16} />
+                      <span>Xóa điểm</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

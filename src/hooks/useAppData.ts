@@ -245,6 +245,31 @@ export function useAppData(user: User | null) {
     return { success: true, message: "Đã gửi lệnh cập nhật trạng thái" };
   };
 
+  const handleDeleteScore = async (maSk: string) => {
+    const toastId = toast.loading('Đang xóa điểm...');
+    
+    api.deleteScore(maSk).then(res => {
+      if (res.success) {
+        toast.success('Đã xóa điểm', { id: toastId });
+        // Refresh data
+        api.loadAll().then(raw => {
+          const data = normalizeApiData(raw);
+          setGsheetData(data);
+          const master = transformApiToMasterData(data.master || []);
+          setMasterData(injectDynamicStatus(master, data.scores, data.tracking));
+          localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+        }).catch(() => {});
+      } else {
+        toast.error('Lỗi xóa điểm: ' + res.message, { id: toastId });
+      }
+    }).catch(err => {
+      console.error(err);
+      toast.error('Lỗi kết nối khi xóa điểm', { id: toastId });
+    });
+
+    return { success: true, message: "Đã gửi lệnh xóa điểm" };
+  };
+
   return {
     user,
     masterData,
@@ -262,6 +287,7 @@ export function useAppData(user: User | null) {
     refreshData,
     handleSubmitScore,
     handleSubmitTracking,
+    handleDeleteScore,
     quickStatusChange
   };
 }

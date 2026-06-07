@@ -17,8 +17,21 @@ export const ACCOUNTS: { username: string; password: string; displayName: string
   { username: 'qlcd',  password: 'pcvt.qlcd2026',  displayName: 'QL Vận hành Côn Đảo', role: 'dept', deptKey: 'QL Vận hành Côn Đảo', aliases: ['QLCĐ', 'Côn Đảo', 'QLCD'] },
 ];
 
-export function authenticate(username: string, password: string): User | null {
-  const account = ACCOUNTS.find(a => a.username === username && a.password === password);
+export function getMergedAccounts(gsheetAccounts?: any[]) {
+  if (!gsheetAccounts || gsheetAccounts.length === 0) return ACCOUNTS;
+  
+  return ACCOUNTS.map(baseAcc => {
+    const sheetAcc = gsheetAccounts.find(s => s.username === baseAcc.username);
+    if (sheetAcc && sheetAcc.password) {
+      return { ...baseAcc, password: sheetAcc.password.toString().trim() };
+    }
+    return baseAcc;
+  });
+}
+
+export function authenticate(username: string, password: string, dynamicAccounts?: any[]): User | null {
+  const accountsToUse = getMergedAccounts(dynamicAccounts);
+  const account = accountsToUse.find(a => a.username === username && a.password === password);
   if (!account) return null;
   return {
     username: account.username,

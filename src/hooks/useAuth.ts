@@ -14,7 +14,16 @@ export function useAuth() {
   });
 
   const login = useCallback((username: string, password: string): boolean => {
-    const u = authenticate(username, password);
+    let dynamicAccounts = [];
+    try {
+      const cache = localStorage.getItem('pcvt_sk_cache');
+      if (cache) {
+        const parsed = JSON.parse(cache);
+        dynamicAccounts = parsed.accounts || [];
+      }
+    } catch(e) {}
+
+    const u = authenticate(username, password, dynamicAccounts);
     if (u) {
       setUser(u);
       localStorage.setItem(SESSION_KEY, JSON.stringify(u));

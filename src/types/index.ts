@@ -70,6 +70,7 @@ export interface GSheetData {
   master: any[];
   scores: any[];
   tracking: TrackingRecord[];
+  accounts?: any[];
 }
 
 export type UserRole = 'admin' | 'dept';

@@ -91,25 +91,6 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
 
   const isEmpty = colItems.da_cham.length === 0 && colItems.dang_tk.length === 0 && colItems.hoan_thanh.length === 0 && colItems.khong_trien_khai.length === 0;
 
-  if (isEmpty) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="text-6xl mb-4">📭</div>
-        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Chưa có Sáng kiến nào trong quy trình</h3>
-        <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
-          Chỉ những Sáng kiến đã được chấm điểm hoặc đang triển khai mới hiển thị trên bảng Kanban này. 
-          Vui lòng vào tab Phòng/Đội để chấm điểm Sáng kiến trước.
-        </p>
-        <button 
-          onClick={() => appData.setCurrentTab('overview')}
-          className="mt-6 px-4 py-2 bg-evn-blue text-white rounded hover:bg-evn-blue-hover transition-colors"
-        >
-          Quay lại Tổng quan
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* Header: Stepper & Filter */}
@@ -139,6 +120,15 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
         </div>
       </div>
 
+      {isEmpty ? (
+        <div className="flex flex-col items-center justify-center h-72 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="text-5xl mb-3">📭</div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Chưa có Sáng kiến nào trong quy trình</h3>
+          <p className="text-gray-500 dark:text-gray-400 text-center max-w-md text-sm">
+            Chỉ những Sáng kiến đã được chấm điểm hoặc đang triển khai mới hiển thị trên bảng Kanban này.
+          </p>
+        </div>
+      ) : (
       <div className="flex flex-1 space-x-4 overflow-x-auto pb-4">
         {/* Col 1 */}
         <div className="flex-shrink-0 w-80 bg-gray-100 dark:bg-gray-800/50 rounded-lg flex flex-col max-h-full border border-gray-200 dark:border-gray-700">
@@ -224,6 +214,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
           </div>
         </div>
       </div>
+      )}
 
       {selectedItem && (
         <TrackingModal 

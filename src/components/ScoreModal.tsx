@@ -88,6 +88,9 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
           ma_sk: item.ma,
           phong_doi: phongDoi,
           nguoi_phu_trach: reviewer,
+          ngay_bat_dau: '',
+          deadline: '',
+          tien_do: 0,
           trang_thai: nextStatus,
           ghi_chu: `Hệ thống: Chuyển trạng thái sau khi chấm điểm (${total}đ - Loại ${grade})`
         });

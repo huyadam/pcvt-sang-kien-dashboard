@@ -19,6 +19,28 @@ export function useAppData(user: User | null) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
+  // Normalize: map tên cột Sheet -> tên field frontend
+  const normalizeApiData = (data: any): any => {
+    const normalized = { ...data };
+    
+    // Tracking: ngay_cap_nhat -> timestamp
+    if (normalized.tracking) {
+      normalized.tracking = normalized.tracking.map((t: any) => ({
+        ...t,
+        timestamp: t.timestamp || t.ngay_cap_nhat || '',
+      }));
+    }
+    
+    // Scores: ngay_cham -> timestamp
+    if (normalized.scores) {
+      normalized.scores = normalized.scores.map((s: any) => ({
+        ...s,
+        timestamp: s.timestamp || s.ngay_cham || '',
+      }));
+    }
+    
+    return normalized;
+  };
 
   const injectDynamicStatus = (master: any, scores: any[], tracking: any[]) => {
     const tMap = new Map<string, string>();
@@ -54,7 +76,7 @@ export function useAppData(user: User | null) {
     const cached = localStorage.getItem('pcvt_sk_cache');
     if (cached && !masterData) {
       try {
-        const parsed = JSON.parse(cached);
+        const parsed = normalizeApiData(JSON.parse(cached));
         setGsheetData(parsed);
         const master = transformApiToMasterData(parsed.master || []);
         setMasterData(injectDynamicStatus(master, parsed.scores, parsed.tracking));
@@ -65,7 +87,8 @@ export function useAppData(user: User | null) {
     
     setError(null);
     try {
-      const data = await api.loadAll();
+      const raw = await api.loadAll();
+      const data = normalizeApiData(raw);
       setGsheetData(data);
       
       const master = transformApiToMasterData(data.master || []);
@@ -117,7 +140,8 @@ export function useAppData(user: User | null) {
     api.submitScore(payload).then(res => {
       if (res.success) {
         toast.success('Đã lưu điểm thành công', { id: toastId });
-        api.loadAll().then(data => {
+        api.loadAll().then(raw => {
+          const data = normalizeApiData(raw);
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});
@@ -146,7 +170,8 @@ export function useAppData(user: User | null) {
     api.submitTracking(payload).then(res => {
       if (res.success) {
         toast.success('Cập nhật tiến độ thành công', { id: toastId });
-        api.loadAll().then(data => {
+        api.loadAll().then(raw => {
+          const data = normalizeApiData(raw);
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});
@@ -187,12 +212,17 @@ export function useAppData(user: User | null) {
       action: 'tracking',
       ma_sk: maSk,
       phong_doi: phongDoi,
+      nguoi_phu_trach: user?.displayName || '',
+      ngay_bat_dau: '',
+      deadline: '',
+      tien_do: 0,
       trang_thai: newStatus,
-      ghi_chu: 'Chuyển trạng thái thủ công'
+      ghi_chu: 'Chuyển trạng thái nhanh'
     }).then(res => {
       if (res.success) {
         toast.success('Đã chuyển trạng thái', { id: toastId });
-        api.loadAll().then(data => {
+        api.loadAll().then(raw => {
+          const data = normalizeApiData(raw);
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});

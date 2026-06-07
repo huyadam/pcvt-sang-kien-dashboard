@@ -70,25 +70,33 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '50px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '45%' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '90px' }} />
+            <col style={{ width: '140px' }} />
+          </colgroup>
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 STT
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('ma')}>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('ma')}>
                 Mã SK {sortConfig.col === 'ma' ? (sortConfig.asc ? '↑' : '↓') : ''}
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 w-1/2" onClick={() => handleSort('ten')}>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('ten')}>
                 Tên Sáng Kiến {sortConfig.col === 'ten' ? (sortConfig.asc ? '↑' : '↓') : ''}
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Đơn Vị
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('diem')}>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('diem')}>
                 Điểm AI {sortConfig.col === 'diem' ? (sortConfig.asc ? '↑' : '↓') : ''}
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Trạng Thái
               </th>
             </tr>
@@ -107,13 +115,13 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                   onClick={() => setSelectedSK(item)}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {idx + 1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-evn-blue dark:text-blue-400">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-evn-blue dark:text-blue-400 truncate">
                     {item.ma}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
                     <div className="line-clamp-2">{item.ten}</div>
                     {item.hard_filtered && (
                       <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
@@ -126,10 +134,10 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 truncate">
                     {item.donvi}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       item.diem >= 8.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                       item.diem >= 6.5 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
@@ -138,7 +146,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                       {item.diem.toFixed(1)} / 10
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <StatusDropdown 
                       maSk={item.ma} 
                       currentStatus={item.trang_thai} 

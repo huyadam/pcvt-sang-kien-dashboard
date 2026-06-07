@@ -19,16 +19,24 @@ export function useAppData(user: User | null) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
-  // Normalize: map tên cột Sheet -> tên field frontend
+  // Danh sách trạng thái hợp lệ
+  const VALID_STATUSES = ['chua_xet', 'chua_cham', 'da_cham', 'da_xet', 'dang_tk', 'trien_khai', 'hoan_thanh', 'huy', 'khong_trien_khai'];
+
+  // Normalize: map tên cột Sheet -> tên field frontend + lọc dữ liệu rác
   const normalizeApiData = (data: any): any => {
     const normalized = { ...data };
     
-    // Tracking: ngay_cap_nhat -> timestamp
+    // Tracking: ngay_cap_nhat -> timestamp + validate trang_thai
     if (normalized.tracking) {
-      normalized.tracking = normalized.tracking.map((t: any) => ({
-        ...t,
-        timestamp: t.timestamp || t.ngay_cap_nhat || '',
-      }));
+      normalized.tracking = normalized.tracking
+        .map((t: any) => ({
+          ...t,
+          timestamp: t.timestamp || t.ngay_cap_nhat || '',
+        }))
+        .filter((t: any) => {
+          // Loại bỏ record có trang_thai không hợp lệ (dữ liệu cũ bị lệch cột)
+          return t.ma_sk && VALID_STATUSES.includes(String(t.trang_thai || '').trim().toLowerCase());
+        });
     }
     
     // Scores: ngay_cham -> timestamp

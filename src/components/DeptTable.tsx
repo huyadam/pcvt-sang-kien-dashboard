@@ -72,12 +72,12 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '40px' }} />
-            <col style={{ width: '90px' }} />
+            <col style={{ width: '36px' }} />
+            <col style={{ width: '85px' }} />
             <col />
-            <col style={{ width: '70px' }} />
-            <col style={{ width: '80px' }} />
-            <col style={{ width: '140px' }} />
+            <col style={{ width: '60px' }} />
+            <col style={{ width: '75px' }} />
+            <col style={{ width: '130px' }} />
           </colgroup>
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -134,8 +134,8 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {item.donvi}
+                  <td className="px-2 py-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="line-clamp-2 break-words" title={item.donvi}>{item.donvi}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

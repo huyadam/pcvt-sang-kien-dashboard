@@ -49,6 +49,35 @@ export function getDeptKeyForUser(username: string): string {
   return account.aliases.length > 0 ? account.aliases[0] : account.deptKey;
 }
 
+/**
+ * So sánh 2 department identifier có thuộc cùng 1 phòng đội không.
+ * Dùng alias table từ ACCOUNTS. KHÔNG phụ thuộc user đang login.
+ */
+export function isSameDept(deptA: string, deptB: string): boolean {
+  if (!deptA || !deptB) return false;
+  const a = deptA.toLowerCase().trim();
+  const b = deptB.toLowerCase().trim();
+  if (a === b) return true;
+
+  // Tìm account mà deptA thuộc về
+  const findAccount = (name: string) => {
+    return ACCOUNTS.find(acc => {
+      if (acc.username.toLowerCase() === name) return true;
+      if (acc.deptKey.toLowerCase().trim() === name) return true;
+      if (acc.displayName.toLowerCase().trim() === name) return true;
+      return acc.aliases.some(alias => alias.toLowerCase().trim() === name);
+    });
+  };
+
+  const accA = findAccount(a);
+  const accB = findAccount(b);
+
+  // Nếu cả 2 đều tìm được account và cùng 1 account → cùng phòng đội
+  if (accA && accB) return accA.username === accB.username;
+  // Nếu chỉ 1 bên tìm được → không match
+  return false;
+}
+
 export function canEditDept(user: User, targetDeptName: string): boolean {
   if (user.role === 'admin') return true;
   if (!targetDeptName || !user.username) return false;

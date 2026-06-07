@@ -3,7 +3,7 @@ import { SangKien, TrackingRecord } from '../types';
 import KanbanCard from './KanbanCard';
 import TrackingModal from './TrackingModal';
 
-import { canEditDept } from '../lib/auth';
+import { isSameDept } from '../lib/auth';
 
 interface KanbanBoardProps {
   appData: any;
@@ -23,11 +23,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
   const isDeptMatch = (deptKey: string, selected: string): boolean => {
     if (selected === 'all') return true;
     if (deptKey === selected) return true;
-    // Dùng canEditDept để check alias (ví dụ KTAT <-> Kỹ thuật An toàn)
-    if (user) return canEditDept({ ...user, deptKey: selected }, deptKey);
-    // Fallback: so sánh lowercase contains
-    return deptKey.toLowerCase().includes(selected.toLowerCase()) || 
-           selected.toLowerCase().includes(deptKey.toLowerCase());
+    return isSameDept(deptKey, selected);
   };
 
   const { trackMap, scoreMap, colItems } = useMemo(() => {

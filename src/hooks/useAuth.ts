@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { User } from '../types';
 import { authenticate } from '../lib/auth';
+import * as api from '../lib/api';
 
 const SESSION_KEY = 'pcvt_sk_user';
 
@@ -13,16 +14,26 @@ export function useAuth() {
     return null;
   });
 
-  const login = useCallback((username: string, password: string): boolean => {
-    let dynamicAccounts = [];
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    // Bước 1: Gọi API lấy danh sách accounts mới nhất từ Google Sheet
+    let dynamicAccounts: any[] = [];
     try {
-      const cache = localStorage.getItem('pcvt_sk_cache');
-      if (cache) {
-        const parsed = JSON.parse(cache);
-        dynamicAccounts = parsed.accounts || [];
-      }
-    } catch(e) {}
+      const data = await api.loadAll();
+      dynamicAccounts = data.accounts || [];
+      // Lưu cache luôn để sau khi login useAppData có dữ liệu sẵn
+      localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+    } catch (e) {
+      // Nếu API lỗi, thử đọc từ cache cũ
+      try {
+        const cache = localStorage.getItem('pcvt_sk_cache');
+        if (cache) {
+          const parsed = JSON.parse(cache);
+          dynamicAccounts = parsed.accounts || [];
+        }
+      } catch (_) {}
+    }
 
+    // Bước 2: Xác thực với danh sách accounts mới nhất
     const u = authenticate(username, password, dynamicAccounts);
     if (u) {
       setUser(u);

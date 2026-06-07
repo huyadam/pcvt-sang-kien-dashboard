@@ -75,7 +75,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
             <col style={{ width: '36px' }} />
             <col style={{ width: '85px' }} />
             <col />
-            <col style={{ width: '60px' }} />
+            <col style={{ width: '15%' }} />
             <col style={{ width: '75px' }} />
             <col style={{ width: '130px' }} />
           </colgroup>

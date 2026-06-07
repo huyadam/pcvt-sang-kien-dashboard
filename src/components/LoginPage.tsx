@@ -1,28 +1,20 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string) => boolean;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
-    try {
-      const success = await onLogin(username.trim().toLowerCase(), password);
-      if (!success) {
-        setError('Tên đăng nhập hoặc mật khẩu không đúng!');
-      }
-    } catch (err) {
-      setError('Lỗi kết nối. Vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
+    const success = onLogin(username.trim().toLowerCase(), password);
+    if (!success) {
+      setError('Tên đăng nhập hoặc mật khẩu không đúng!');
     }
   };
 
@@ -74,15 +66,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-evn-orange hover:bg-evn-orange-hover text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-evn-orange disabled:opacity-60 disabled:cursor-wait"
+              className="w-full bg-evn-orange hover:bg-evn-orange-hover text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-evn-orange"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                  Đang xác thực...
-                </span>
-              ) : 'Đăng Nhập'}
+              Đăng Nhập
             </button>
           </form>
 

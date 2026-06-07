@@ -85,3 +85,23 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
 }
+
+export interface AppData {
+  user: User | null;
+  masterData: MasterData | null;
+  gsheetData: GSheetData;
+  loading: boolean;
+  error: string | null;
+  currentTab: string;
+  setCurrentTab: (tab: string) => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  statusFilter: string;
+  setStatusFilter: (s: string) => void;
+  sortConfig: { key: string; direction: 'asc' | 'desc' };
+  setSortConfig: (c: any) => void;
+  refreshData: () => Promise<void>;
+  handleSubmitScore: (p: ScorePayload) => Promise<{success: boolean; message?: string}>;
+  handleSubmitTracking: (p: TrackingPayload) => Promise<{success: boolean; message?: string}>;
+  quickStatusChange: (maSk: string, st: TrangThai) => Promise<{success: boolean; message?: string}>;
+}

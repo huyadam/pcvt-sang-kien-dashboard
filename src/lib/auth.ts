@@ -28,29 +28,39 @@ export function authenticate(username: string, password: string): User | null {
   };
 }
 
+export function getDeptKeyForUser(username: string): string {
+  const account = ACCOUNTS.find(a => a.username === username);
+  if (!account || account.role === 'admin') return 'overview';
+  // Lấy alias đầu tiên làm key chính xác của masterData.departments (ví dụ 'KTAT')
+  // Nếu không có thì lấy tên đầy đủ
+  return account.aliases.length > 0 ? account.aliases[0] : account.deptKey;
+}
+
 export function canEditDept(user: User, targetDeptName: string): boolean {
   if (user.role === 'admin') return true;
-  if (!targetDeptName || !user.deptKey) return false;
+  if (!targetDeptName || !user.username) return false;
   
   const targetLower = targetDeptName.toLowerCase().trim();
-  const userDeptLower = user.deptKey.toLowerCase().trim();
   
-  if (targetLower.includes(userDeptLower) || userDeptLower.includes(targetLower)) return true;
-  
-  // Kiểm tra bằng aliases & username
+  // Kiểm tra bảng lookup cố định từ tài khoản
   const account = ACCOUNTS.find(a => a.username === user.username);
   if (account) {
     if (targetLower === account.username.toLowerCase()) return true;
+    if (targetLower === account.deptKey.toLowerCase().trim()) return true;
     
     if (account.aliases) {
       for (const alias of account.aliases) {
         const aliasLower = alias.toLowerCase().trim();
-        if (targetLower.includes(aliasLower) || aliasLower.includes(targetLower)) {
+        if (targetLower === aliasLower) {
           return true;
         }
       }
     }
   }
+  
+  // Rơi lại phương pháp fallback
+  const userDeptLower = user.deptKey.toLowerCase().trim();
+  if (targetLower.includes(userDeptLower) || userDeptLower.includes(targetLower)) return true;
   
   return false;
 }

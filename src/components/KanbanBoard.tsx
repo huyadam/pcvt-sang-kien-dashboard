@@ -103,15 +103,31 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      {/* Stepper (U6) */}
-      <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 px-2 overflow-x-auto pb-2 shrink-0">
-        <span className="flex items-center"><span className="mr-1">⏳</span> Chưa xét</span>
-        <span className="text-gray-300 dark:text-gray-600">→</span>
-        <span className="flex items-center text-orange-600 dark:text-orange-400 font-medium bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">✏️</span> Đã chấm/xét</span>
-        <span className="text-gray-300 dark:text-gray-600">→</span>
-        <span className="flex items-center text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">🚀</span> Triển khai</span>
-        <span className="text-gray-300 dark:text-gray-600">→</span>
-        <span className="flex items-center text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">✅</span> Hoàn thành</span>
+      {/* Header: Stepper & Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 px-2 pb-2">
+        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto pb-2 sm:pb-0">
+          <span className="flex items-center"><span className="mr-1">⏳</span> Chưa xét</span>
+          <span className="text-gray-300 dark:text-gray-600">→</span>
+          <span className="flex items-center text-orange-600 dark:text-orange-400 font-medium bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">✏️</span> Đã chấm/xét</span>
+          <span className="text-gray-300 dark:text-gray-600">→</span>
+          <span className="flex items-center text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">🚀</span> Triển khai</span>
+          <span className="text-gray-300 dark:text-gray-600">→</span>
+          <span className="flex items-center text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">✅</span> Hoàn thành</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Lọc phòng đội:</span>
+          <select 
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className="w-48 p-1.5 sm:p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-evn-blue"
+          >
+            <option value="all">🌐 Tất cả Phòng/Đội</option>
+            {masterData && Object.entries(masterData.departments).map(([key, dept]: [string, any]) => (
+              <option key={key} value={key}>{dept.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="flex flex-1 space-x-4 overflow-x-auto pb-4">

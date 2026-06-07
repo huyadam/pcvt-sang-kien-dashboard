@@ -7,6 +7,7 @@ import LoginPage from './components/LoginPage';
 import Overview from './components/Overview';
 import DeptTable from './components/DeptTable';
 import KanbanBoard from './components/KanbanBoard';
+import { Toaster } from 'react-hot-toast';
 
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
@@ -58,7 +59,7 @@ export default function App() {
 
   const renderContent = () => {
     if (currentTab === 'overview') {
-      return <Overview masterData={masterData} isDark={isDark} />;
+      return <Overview appData={appData} isDark={isDark} />;
     }
     if (currentTab === 'tracking') {
       return <KanbanBoard appData={appData} />;
@@ -67,7 +68,9 @@ export default function App() {
   };
 
   return (
-    <Layout
+    <>
+      <Toaster position="top-right" />
+      <Layout
       currentTab={currentTab}
       onTabChange={setCurrentTab}
       masterData={masterData}
@@ -81,5 +84,6 @@ export default function App() {
         {renderContent()}
       </div>
     </Layout>
+    </>
   );
 }

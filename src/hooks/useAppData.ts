@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { GSheetData, MasterData, ScorePayload, TrackingPayload, TrangThai, User } from '../types';
 import * as api from '../lib/api';
 import { transformApiToMasterData } from '../lib/utils';
-import { canEditDept } from '../lib/auth';
+import { canEditDept, getDeptKeyForUser } from '../lib/auth';
+import toast from 'react-hot-toast';
 
 export function useAppData(user: User | null) {
   const [masterData, setMasterData] = useState<MasterData | null>(null);
@@ -13,7 +14,7 @@ export function useAppData(user: User | null) {
   const [currentTab, setCurrentTab] = useState(() => {
     if (!user) return 'overview';
     if (user.role === 'admin') return 'overview';
-    return user.deptKey || 'overview';
+    return getDeptKeyForUser(user.username);
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -70,44 +71,60 @@ export function useAppData(user: User | null) {
 
   const handleSubmitScore = async (payload: ScorePayload) => {
     if (user && !canEditDept(user, payload.phong_doi)) {
+      toast.error('Bạn không có quyền chấm điểm sáng kiến phòng đội khác');
       return { success: false, message: 'Bạn không có quyền chấm điểm sáng kiến phòng đội khác' };
     }
 
     // Optimistic UI Update: Cập nhật local ngay lập tức
     updateLocalStatus(payload.ma_sk, 'da_cham');
+    const toastId = toast.loading('Đang lưu điểm...');
     
     // Gửi API ngầm trong background (fire-and-forget)
     api.submitScore(payload).then(res => {
       if (res.success) {
+        toast.success('Đã lưu điểm thành công', { id: toastId });
         api.loadAll().then(data => {
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});
+      } else {
+        toast.error('Lưu thất bại: ' + res.message, { id: toastId });
       }
-    }).catch(err => console.error("Lỗi gửi điểm:", err));
+    }).catch(err => {
+      console.error("Lỗi gửi điểm:", err);
+      toast.error('Lỗi kết nối khi gửi điểm', { id: toastId });
+    });
 
-    return { success: true, message: "Đã lưu điểm thành công" };
+    return { success: true, message: "Đã gửi lệnh lưu điểm" };
   };
 
   const handleSubmitTracking = async (payload: TrackingPayload) => {
     if (user && !canEditDept(user, payload.phong_doi)) {
+      toast.error('Bạn không có quyền cập nhật tiến độ phòng đội khác');
       return { success: false, message: 'Bạn không có quyền cập nhật tiến độ sáng kiến phòng đội khác' };
     }
 
     // Optimistic UI Update: Cập nhật local ngay lập tức
     updateLocalStatus(payload.ma_sk, payload.trang_thai);
+    const toastId = toast.loading('Đang lưu tiến độ...');
     
     // Gửi API ngầm trong background
     api.submitTracking(payload).then(res => {
       if (res.success) {
+        toast.success('Cập nhật tiến độ thành công', { id: toastId });
         api.loadAll().then(data => {
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});
+      } else {
+        toast.error('Lưu thất bại: ' + res.message, { id: toastId });
       }
-    }).catch(err => console.error("Lỗi cập nhật tiến độ:", err));
+    }).catch(err => {
+      console.error("Lỗi cập nhật tiến độ:", err);
+      toast.error('Lỗi kết nối khi cập nhật tiến độ', { id: toastId });
+    });
 
-    return { success: true, message: "Đã cập nhật trạng thái thành công" };
+    return { success: true, message: "Đã gửi lệnh cập nhật tiến độ" };
   };
 
   const quickStatusChange = async (maSk: string, newStatus: TrangThai) => {
@@ -124,11 +141,13 @@ export function useAppData(user: User | null) {
       }
     }
     if (user && !canEditDept(user, phongDoi)) {
+      toast.error('Bạn không có quyền đổi trạng thái sáng kiến phòng đội khác');
       return { success: false, message: 'Bạn không có quyền đổi trạng thái sáng kiến phòng đội khác' };
     }
 
     // Optimistic UI
     updateLocalStatus(maSk, newStatus);
+    const toastId = toast.loading('Đang chuyển trạng thái...');
 
     api.submitTracking({
       action: 'tracking',
@@ -138,17 +157,24 @@ export function useAppData(user: User | null) {
       ghi_chu: 'Chuyển trạng thái thủ công'
     }).then(res => {
       if (res.success) {
+        toast.success('Đã chuyển trạng thái', { id: toastId });
         api.loadAll().then(data => {
           setGsheetData(data);
           localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
         }).catch(() => {});
+      } else {
+        toast.error('Lỗi: ' + res.message, { id: toastId });
       }
-    }).catch(err => console.error(err));
+    }).catch(err => {
+      console.error(err);
+      toast.error('Lỗi kết nối', { id: toastId });
+    });
 
-    return { success: true, message: "Đã cập nhật trạng thái" };
+    return { success: true, message: "Đã gửi lệnh cập nhật trạng thái" };
   };
 
   return {
+    user,
     masterData,
     gsheetData,
     loading,

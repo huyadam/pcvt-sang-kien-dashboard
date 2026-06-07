@@ -37,10 +37,20 @@ export default function TrackingModal({ item, track, onClose, appData }: Trackin
     e.preventDefault();
     setSubmitting(true);
     try {
+      let phongDoi = item.source_dept;
+      if (!phongDoi && appData.masterData) {
+        for (const [key, dept] of Object.entries(appData.masterData.departments)) {
+          if ((dept as any).items.find((i: any) => i.ma === item.ma)) {
+            phongDoi = key;
+            break;
+          }
+        }
+      }
+      
       const payload = {
         action: 'tracking',
         ma_sk: item.ma,
-        phong_doi: item.source_dept || 'Văn phòng',
+        phong_doi: phongDoi || 'Văn phòng',
         ...formData
       };
       

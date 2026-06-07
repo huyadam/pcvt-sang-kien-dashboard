@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SangKien } from '../types';
 import { FileText, Edit, X } from 'lucide-react';
 import ScoreModal from './ScoreModal';
+import { canEditDept } from '../lib/auth';
 
 interface SKDetailModalProps {
   item: SangKien;
@@ -13,10 +14,26 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
 
+  // Find phong_doi key
+  let phongDoi = item.source_dept;
+  if (!phongDoi && appData.masterData) {
+    for (const [key, dept] of Object.entries(appData.masterData.departments)) {
+      if ((dept as any).items.find((i: any) => i.ma === item.ma)) {
+        phongDoi = key;
+        break;
+      }
+    }
+  }
+  const canEdit = appData.user ? canEditDept(appData.user, phongDoi || 'Văn phòng') : false;
+
+  const [activeTab, setActiveTab] = useState<'content' | 'history'>('content');
+
   const existingScore = appData?.gsheetData?.scores?.find((s: any) => s.ma_sk === item.ma);
   const totalScore = existingScore 
     ? (Number(existingScore.d1_tinhmoi) || 0) + (Number(existingScore.d2_tuchu) || 0) + (Number(existingScore.d3_chiphi) || 0) + (Number(existingScore.d4_kinhte) || 0) + (Number(existingScore.d5_antoan) || 0)
     : 0;
+
+  const history = appData?.gsheetData?.tracking?.filter((t: any) => t.ma_sk === item.ma).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) || [];
 
   return (
     <>
@@ -110,11 +127,15 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                   
                   <button 
                   onClick={() => setShowScoreModal(true)}
-                  className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    existingScore 
-                      ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' 
-                      : 'bg-evn-orange hover:bg-evn-orange-hover focus:ring-evn-orange'
+                  disabled={!canEdit}
+                  className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    !canEdit 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400'
+                      : existingScore 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500' 
+                        : 'bg-evn-orange hover:bg-evn-orange-hover text-white focus:ring-evn-orange'
                   }`}
+                  title={!canEdit ? "Bạn không có quyền chấm điểm sáng kiến của phòng đội khác" : ""}
                 >
                   <Edit size={18} />
                   {existingScore ? `Đã chấm (${totalScore}đ)` : 'Chấm điểm'}
@@ -122,22 +143,101 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                 </div>
               </div>
 
-              {/* Cột phải: Content / Tóm tắt giải pháp / PDF Viewer */}
+              {/* Cột phải: Content / Tóm tắt giải pháp / PDF Viewer / History */}
               <div className="bg-white dark:bg-gray-800 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
-                <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
-                  {showPdf ? 'Tài liệu Gốc (Google Drive)' : 'Tóm tắt Nội dung Giải pháp'}
-                </h4>
+                <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                  <button 
+                    onClick={() => setActiveTab('content')}
+                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'content' ? 'border-evn-blue text-evn-blue dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                  >
+                    Nội dung Giải pháp
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('history')}
+                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors flex items-center space-x-2 ${activeTab === 'history' ? 'border-evn-blue text-evn-blue dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                  >
+                    <span>Lịch sử Cập nhật</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-0.5 px-2 rounded-full text-xs">
+                      {history.length + (existingScore ? 1 : 0)}
+                    </span>
+                  </button>
+                </div>
                 
-                <div className="flex-1 min-h-[300px] max-h-[500px] overflow-y-auto">
-                  {showPdf ? (
-                    <iframe 
-                      src={item.gdrive_url.replace('/view', '/preview')} 
-                      className="w-full h-full min-h-[400px] rounded border border-gray-200 dark:border-gray-700"
-                      allow="autoplay"
-                    ></iframe>
+                <div className="flex-1 min-h-[300px] max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  {activeTab === 'content' ? (
+                    <>
+                      {showPdf ? (
+                        <iframe 
+                          src={item.gdrive_url.replace('/view', '/preview')} 
+                          className="w-full h-full min-h-[400px] rounded border border-gray-200 dark:border-gray-700"
+                          allow="autoplay"
+                        ></iframe>
+                      ) : (
+                        <div className="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          {item.giaiphap || 'Sáng kiến này chưa có tóm tắt giải pháp.'}
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <div className="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      {item.giaiphap || 'Sáng kiến này chưa có tóm tắt giải pháp.'}
+                    <div className="space-y-6">
+                      {history.length === 0 && !existingScore && (
+                        <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                          Chưa có lịch sử cập nhật nào cho Sáng kiến này.
+                        </div>
+                      )}
+
+                      {/* Display Score Event if exists */}
+                      {existingScore && (
+                        <div className="relative pl-6 border-l-2 border-orange-200 dark:border-orange-800">
+                          <div className="absolute w-3 h-3 bg-evn-orange rounded-full -left-[7px] top-2"></div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            {new Date(existingScore.timestamp || Date.now()).toLocaleString('vi-VN')}
+                          </p>
+                          <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-100 dark:border-orange-800/50">
+                            <p className="text-sm font-semibold text-orange-800 dark:text-orange-400">
+                              Đã chấm điểm sơ bộ ({totalScore}đ)
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                              Bởi: {existingScore.nguoi_cham}
+                            </p>
+                            {existingScore.ghi_chu && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2 border-t border-orange-200 dark:border-orange-800/50 pt-2">
+                                "{existingScore.ghi_chu}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Display Tracking Events */}
+                      {history.map((t: any, idx: number) => (
+                        <div key={idx} className="relative pl-6 border-l-2 border-blue-200 dark:border-blue-800">
+                          <div className="absolute w-3 h-3 bg-evn-blue rounded-full -left-[7px] top-2"></div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            {new Date(t.timestamp).toLocaleString('vi-VN')}
+                          </p>
+                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Cập nhật trạng thái: {t.trang_thai}
+                              </span>
+                              <span className="text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded">
+                                Tiến độ: {t.tien_do || 0}%
+                              </span>
+                            </div>
+                            {t.nguoi_phu_trach && (
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                Phụ trách: {t.nguoi_phu_trach}
+                              </p>
+                            )}
+                            {t.ghi_chu && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+                                "{t.ghi_chu}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

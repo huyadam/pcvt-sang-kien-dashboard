@@ -45,9 +45,7 @@ export default function DeptNav({ departments, currentTab, onTabChange, user }: 
 
   return (
     <nav className="flex flex-col py-4">
-      {user.role === 'admin' && (
-        <NavItem id="overview" label="Tổng quan" icon="📊" />
-      )}
+      <NavItem id="overview" label="Tổng quan" icon="📊" />
       <NavItem id="tracking" label="Theo dõi Tiến độ" icon="📈" />
       
       <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>

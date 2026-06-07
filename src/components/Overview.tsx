@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { MasterData, SangKien } from '../types';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { sortDeptEntries } from '../lib/constants';
@@ -27,26 +27,37 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function Overview({ appData, isDark = false }: OverviewProps) {
-  const { masterData, gsheetData } = appData;
+  const { masterData, gsheetData, user } = appData;
+  const [filterDept, setFilterDept] = useState<string>(() => {
+    return user && user.role === 'dept' && user.deptKey ? user.deptKey : 'all';
+  });
+
   if (!masterData) return null;
 
+  const getFilteredDepts = () => {
+    if (filterDept === 'all') return Object.entries(masterData.departments);
+    if (masterData.departments[filterDept]) return [[filterDept, masterData.departments[filterDept]]];
+    return [];
+  };
+
   const stats = useMemo(() => {
-    let valid = 0, filtered = 0, review = 0;
-    Object.values(masterData.departments).forEach((dept: any) => {
+    let valid = 0, filtered = 0, review = 0, total = 0;
+    getFilteredDepts().forEach(([_, dept]: [string, any]) => {
+      total += dept.count;
       dept.items.forEach((item: SangKien) => {
         if (item.hard_filtered) filtered++;
         else valid++;
         if (item.need_review) review++;
       });
     });
-    return { valid, filtered, review, total: masterData.total };
-  }, [masterData]);
+    return { valid, filtered, review, total };
+  }, [masterData, filterDept]);
 
   const pieData = useMemo(() => {
     const counts: Record<string, number> = {
       chua_xet: 0, da_cham: 0, da_xet: 0, dang_tk: 0, hoan_thanh: 0, khong_trien_khai: 0
     };
-    Object.values(masterData.departments).forEach((dept: any) => {
+    getFilteredDepts().forEach(([_, dept]: [string, any]) => {
       dept.items.forEach((item: SangKien) => {
         if (!item.hard_filtered) {
           if (counts[item.trang_thai] !== undefined) {
@@ -62,10 +73,10 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
       value: counts[k],
       color: COLORS[k as keyof typeof COLORS] || '#9ca3af'
     })).filter(d => d.value > 0);
-  }, [masterData]);
+  }, [masterData, filterDept]);
 
   const barData = useMemo(() => {
-    const sortedEntries = sortDeptEntries(Object.entries(masterData.departments));
+    const sortedEntries = sortDeptEntries(getFilteredDepts());
     return sortedEntries.map(([key, dept]: [string, any]) => {
       let chua_xet = 0, da_cham = 0, dang_tk = 0, hoan_thanh = 0, khong_tk = 0;
       dept.items.forEach((item: SangKien) => {
@@ -78,7 +89,7 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
         }
       });
       return {
-        name: dept.name,
+        name: filterDept === 'all' ? dept.name : 'Số lượng',
         'Chưa xét': chua_xet,
         'Đã chấm/xét': da_cham,
         'Đang TK': dang_tk,
@@ -86,7 +97,7 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
         'Không TK': khong_tk,
       };
     });
-  }, [masterData]);
+  }, [masterData, filterDept]);
 
   const topItems = useMemo(() => {
     let all: Array<SangKien & { totalScore: number }> = [];
@@ -100,7 +111,7 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
       });
     }
 
-    Object.values(masterData.departments).forEach((dept: any) => {
+    getFilteredDepts().forEach(([_, dept]: [string, any]) => {
       dept.items.forEach((item: SangKien) => {
         if (!item.hard_filtered) {
           const finalScore = scoreMap.has(item.ma) ? scoreMap.get(item.ma) : item.diem;
@@ -110,7 +121,7 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
     });
 
     return all.sort((a, b) => b.totalScore - a.totalScore).slice(0, 10);
-  }, [masterData, gsheetData]);
+  }, [masterData, gsheetData, filterDept]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -132,6 +143,24 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Header and Filter */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tổng quan Sáng kiến PCVT 2026</h2>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Lọc phòng đội:</span>
+          <select 
+            value={filterDept}
+            onChange={(e) => setFilterDept(e.target.value)}
+            className="w-48 p-1.5 sm:p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-evn-blue"
+          >
+            <option value="all">🌐 Tất cả Phòng/Đội</option>
+            {Object.entries(masterData.departments).map(([key, dept]: [string, any]) => (
+              <option key={key} value={key}>{dept.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-gray-400">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppData } from './hooks/useAppData';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useAuth } from './hooks/useAuth';
@@ -8,11 +8,23 @@ import Overview from './components/Overview';
 import DeptTable from './components/DeptTable';
 import KanbanBoard from './components/KanbanBoard';
 import { Toaster } from 'react-hot-toast';
+import * as api from './lib/api';
 
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
   const { user, isAuthenticated, login, logout } = useAuth();
   const appData = useAppData(user);
+  const [prefetchDone, setPrefetchDone] = useState(false);
+
+  // Pre-fetch: Khi F5 mở trang, tải toàn bộ dữ liệu GSheet trước (kể cả accounts)
+  useEffect(() => {
+    api.loadAll()
+      .then(data => {
+        localStorage.setItem('pcvt_sk_cache', JSON.stringify(data));
+      })
+      .catch(() => {})
+      .finally(() => setPrefetchDone(true));
+  }, []);
 
   const {
     loading,
@@ -23,6 +35,18 @@ export default function App() {
     setCurrentTab,
     refreshData,
   } = appData;
+
+  // Hiện loading trong khi đang pre-fetch dữ liệu
+  if (!prefetchDone) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-evn-blue to-[#002a4d]">
+        <div className="text-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-white border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-white/80">Đang đồng bộ dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return <LoginPage onLogin={login} />;

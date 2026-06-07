@@ -10,10 +10,20 @@ interface DeptTableProps {
 }
 
 export default function DeptTable({ deptKey, appData }: DeptTableProps) {
-  const { masterData, searchQuery, statusFilter, sortConfig, setSortConfig, quickStatusChange, user } = appData;
+  const { masterData, searchQuery, statusFilter, sortConfig, setSortConfig, quickStatusChange, user, gsheetData } = appData;
   const [selectedSK, setSelectedSK] = useState<SangKien | null>(null);
+  const [scoreFilter, setScoreFilter] = useState<'all' | 'chua_cham' | 'da_cham'>('all');
 
   const deptData = masterData?.departments[deptKey];
+
+  // Build set of scored ma_sk for quick lookup
+  const scoreSet = useMemo(() => {
+    const s = new Set<string>();
+    if (gsheetData?.scores) {
+      gsheetData.scores.forEach((sc: any) => s.add(sc.ma_sk));
+    }
+    return s;
+  }, [gsheetData]);
   
   const filteredItems = useMemo(() => {
     if (!deptData?.items) return [];
@@ -25,11 +35,23 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                          item.ten.toLowerCase().includes(query) || 
                          item.donvi.toLowerCase().includes(query);
       
-      // Filter by status
+      // Filter by workflow status
       const matchStatus = statusFilter === 'all' || item.trang_thai === statusFilter;
+
+      // Filter by score status
+      const isScored = scoreSet.has(item.ma);
+      const matchScore = scoreFilter === 'all' || 
+                         (scoreFilter === 'da_cham' && isScored) || 
+                         (scoreFilter === 'chua_cham' && !isScored);
       
-      return matchSearch && matchStatus;
+      return matchSearch && matchStatus && matchScore;
     }).sort((a: SangKien, b: SangKien) => {
+      // Ưu tiên: chưa chấm lên trước, đã chấm xuống dưới
+      const aScored = scoreSet.has(a.ma) ? 1 : 0;
+      const bScored = scoreSet.has(b.ma) ? 1 : 0;
+      if (aScored !== bScored) return aScored - bScored;
+
+      // Sau đó sort theo cột user chọn
       const col = sortConfig.col as keyof SangKien;
       const asc = sortConfig.asc ? 1 : -1;
       
@@ -37,7 +59,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
       if (a[col] > b[col]) return 1 * asc;
       return 0;
     });
-  }, [deptData, searchQuery, statusFilter, sortConfig]);
+  }, [deptData, searchQuery, statusFilter, scoreFilter, sortConfig, scoreSet]);
 
   const handleSort = (col: string) => {
     if (sortConfig.col === col) {
@@ -50,6 +72,8 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
   if (!deptData) return <div className="p-4 text-center text-gray-500">Không tìm thấy phòng/đội</div>;
 
   const canEdit = user ? canEditDept(user, deptKey) : false;
+  const scoredCount = deptData.items.filter((i: SangKien) => scoreSet.has(i.ma)).length;
+  const unscoredCount = deptData.items.length - scoredCount;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -61,12 +85,48 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
         </div>
       )}
       <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Danh sách Sáng kiến: {deptData.name}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Hiển thị {filteredItems.length} / {deptData.count} sáng kiến
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Danh sách Sáng kiến: {deptData.name}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Hiển thị {filteredItems.length} / {deptData.count} sáng kiến
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setScoreFilter('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                scoreFilter === 'all' 
+                  ? 'bg-evn-blue text-white' 
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Tất cả ({deptData.count})
+            </button>
+            <button
+              onClick={() => setScoreFilter('chua_cham')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                scoreFilter === 'chua_cham' 
+                  ? 'bg-orange-500 text-white' 
+                  : 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40'
+              }`}
+            >
+              ⏳ Chưa chấm ({unscoredCount})
+            </button>
+            <button
+              onClick={() => setScoreFilter('da_cham')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                scoreFilter === 'da_cham' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40'
+              }`}
+            >
+              ✅ Đã chấm ({scoredCount})
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

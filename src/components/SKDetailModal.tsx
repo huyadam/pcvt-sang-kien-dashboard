@@ -13,6 +13,7 @@ interface SKDetailModalProps {
 export default function SKDetailModal({ item, onClose, appData }: SKDetailModalProps) {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
 
   // Find phong_doi key
   let phongDoi = item.source_dept;
@@ -194,29 +195,17 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                               <span>↗ Mở tab mới</span>
                             </button>
                             <button
-                              onClick={() => {
-                                const el = document.getElementById(`pdf-frame-${item.ma}`);
-                                if (el) {
-                                  if (el.requestFullscreen) {
-                                    el.requestFullscreen();
-                                  } else if ((el as any).webkitRequestFullscreen) {
-                                    (el as any).webkitRequestFullscreen();
-                                  } else if ((el as any).msRequestFullscreen) {
-                                    (el as any).msRequestFullscreen();
-                                  }
-                                }
-                              }}
+                              onClick={() => setShowPdfModal(true)}
                               className="text-xs flex items-center space-x-1 px-2 py-1 bg-evn-blue hover:bg-evn-blue-hover text-white rounded transition"
                             >
-                              <span>⛶ Toàn màn hình</span>
+                              <span>⛶ Mở lớn (Popup)</span>
                             </button>
                           </div>
                           <iframe 
                             id={`pdf-frame-${item.ma}`}
                             src={item.gdrive_url.replace('/view', '/preview')} 
                             className="w-full h-full min-h-[400px] rounded border border-gray-200 dark:border-gray-700 bg-white"
-                            allow="autoplay; fullscreen"
-                            allowFullScreen
+                            allow="autoplay"
                           ></iframe>
                         </div>
                       ) : (
@@ -303,6 +292,41 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
           appData={appData}
         />
       )}
+
+    {/* PDF Fullscreen Modal */}
+    {showPdfModal && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowPdfModal(false)}></div>
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in">
+          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4">
+              {item.ten}
+            </h3>
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={() => {
+                  const w = window.open(item.gdrive_url, '_blank');
+                  if (w) w.focus();
+                }}
+                className="text-sm flex items-center space-x-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-gray-700 dark:text-gray-300 transition font-medium"
+              >
+                <span>↗ Tab mới</span>
+              </button>
+              <button onClick={() => setShowPdfModal(false)} className="p-1.5 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 bg-gray-200 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 rounded transition">
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 bg-gray-100 dark:bg-gray-900 p-2">
+            <iframe 
+              src={item.gdrive_url.replace('/view', '/preview')} 
+              className="w-full h-full rounded shadow-inner bg-white"
+              allow="autoplay"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 }

@@ -182,11 +182,43 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                   {activeTab === 'content' ? (
                     <>
                       {showPdf ? (
-                        <iframe 
-                          src={item.gdrive_url.replace('/view', '/preview')} 
-                          className="w-full h-full min-h-[400px] rounded border border-gray-200 dark:border-gray-700"
-                          allow="autoplay"
-                        ></iframe>
+                        <div className="flex flex-col h-full space-y-2">
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => {
+                                const w = window.open(item.gdrive_url, '_blank');
+                                if (w) w.focus();
+                              }}
+                              className="text-xs flex items-center space-x-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded text-gray-700 dark:text-gray-300 transition"
+                            >
+                              <span>↗ Mở tab mới</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                const el = document.getElementById(`pdf-frame-${item.ma}`);
+                                if (el) {
+                                  if (el.requestFullscreen) {
+                                    el.requestFullscreen();
+                                  } else if ((el as any).webkitRequestFullscreen) {
+                                    (el as any).webkitRequestFullscreen();
+                                  } else if ((el as any).msRequestFullscreen) {
+                                    (el as any).msRequestFullscreen();
+                                  }
+                                }
+                              }}
+                              className="text-xs flex items-center space-x-1 px-2 py-1 bg-evn-blue hover:bg-evn-blue-hover text-white rounded transition"
+                            >
+                              <span>⛶ Toàn màn hình</span>
+                            </button>
+                          </div>
+                          <iframe 
+                            id={`pdf-frame-${item.ma}`}
+                            src={item.gdrive_url.replace('/view', '/preview')} 
+                            className="w-full h-full min-h-[400px] rounded border border-gray-200 dark:border-gray-700 bg-white"
+                            allow="autoplay; fullscreen"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
                       ) : (
                         <div className="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                           {item.giaiphap || 'Sáng kiến này chưa có tóm tắt giải pháp.'}

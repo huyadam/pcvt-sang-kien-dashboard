@@ -365,21 +365,3 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
     </>
   );
 }
-={20} />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 bg-gray-100 dark:bg-gray-900 p-2">
-            <iframe
-              src={item.gdrive_url.replace('/view', '/preview')}
-              className="w-full h-full rounded shadow-inner bg-white"
-              allow="autoplay"
-            ></iframe>
-          </div>
-        </div>
-      </div>
-    )}
-    </>
-  );
-}
-}

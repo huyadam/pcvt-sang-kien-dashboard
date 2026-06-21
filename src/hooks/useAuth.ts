@@ -4,6 +4,7 @@ import { authenticate } from '../lib/auth';
 import * as api from '../lib/api';
 
 const SESSION_KEY = 'pcvt_sk_user';
+const CACHE_KEY = 'pcvt_sk_cache_v3';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(() => {
@@ -15,26 +16,21 @@ export function useAuth() {
   });
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    // 1. Thử lấy accounts từ cache trước
     let dynamicAccounts: any[] = [];
     try {
-      const cache = localStorage.getItem('pcvt_sk_cache');
+      const cache = localStorage.getItem(CACHE_KEY);
       if (cache) {
         const parsed = JSON.parse(cache);
         dynamicAccounts = parsed.accounts || [];
       }
     } catch (_) {}
 
-    // 2. Nếu cache không có accounts, fetch từ API
     if (dynamicAccounts.length === 0) {
       try {
         const freshData = await api.loadAll();
         dynamicAccounts = freshData.accounts || [];
-        // Cache lại để lần sau dùng
-        localStorage.setItem('pcvt_sk_cache', JSON.stringify(freshData));
-      } catch (_) {
-        // Nếu fetch lỗi, tiếp tục dùng password mặc định trong code
-      }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+      } catch (_) {}
     }
 
     const u = authenticate(username, password, dynamicAccounts);
@@ -49,7 +45,7 @@ export function useAuth() {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem('pcvt_sk_cache');
+    localStorage.removeItem(CACHE_KEY);
   }, []);
 
   return { user, isAuthenticated: !!user, login, logout };

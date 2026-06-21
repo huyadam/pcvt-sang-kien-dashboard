@@ -182,7 +182,10 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                     {item.ma}
                   </td>
                   <td className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    <div className="line-clamp-2">{item.ten}</div>
+                    <div className="font-semibold line-clamp-2">{item.ten}</div>
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 italic" title={item.giaiphap}>
+                      {item.giaiphap || "Chưa có tóm tắt giải pháp"}
+                    </div>
                     {item.hard_filtered && (
                       <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                         🗑️ Đã lọc

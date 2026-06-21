@@ -7,7 +7,9 @@ export interface SangKien {
   diem: number;
   score: number;
   explain: string;
+  thuctrang: string;
   giaiphap: string;
+  hieuqua: string;
   hard_filtered: boolean;
   need_review: boolean;
   gdrive_url: string;

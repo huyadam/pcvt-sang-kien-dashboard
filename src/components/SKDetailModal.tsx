@@ -3,6 +3,7 @@ import { SangKien } from '../types';
 import { FileText, Edit, X } from 'lucide-react';
 import ScoreModal from './ScoreModal';
 import { canEditDept } from '../lib/auth';
+import { MarkdownText } from '../lib/markdown';
 
 interface SKDetailModalProps {
   item: SangKien;
@@ -209,8 +210,42 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
                           ></iframe>
                         </div>
                       ) : (
-                        <div className="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                          {item.giaiphap || 'Sáng kiến này chưa có tóm tắt giải pháp.'}
+                        <div className="space-y-4 pb-4">
+                          {/* Thực trạng */}
+                          <div className="relative pl-4 border-l-4 border-red-500 bg-red-50/50 dark:bg-red-900/10 p-3 rounded-r-lg">
+                            <h4 className="font-bold text-red-700 dark:text-red-400 mb-2 flex items-center">
+                              <span className="mr-2">🔴</span> Thực trạng & Vấn đề
+                            </h4>
+                            <div className="text-gray-700 dark:text-gray-300">
+                              {item.thuctrang
+                                ? <MarkdownText text={item.thuctrang} />
+                                : <em className="text-gray-400 text-sm">Chưa có thông tin thực trạng</em>}
+                            </div>
+                          </div>
+
+                          {/* Giải pháp */}
+                          <div className="relative pl-4 border-l-4 border-green-500 bg-green-50/50 dark:bg-green-900/10 p-3 rounded-r-lg">
+                            <h4 className="font-bold text-green-700 dark:text-green-400 mb-2 flex items-center">
+                              <span className="mr-2">🟢</span> Giải pháp Cải tiến
+                            </h4>
+                            <div className="text-gray-700 dark:text-gray-300">
+                              {item.giaiphap
+                                ? <MarkdownText text={item.giaiphap} />
+                                : <em className="text-gray-400 text-sm">Chưa có thông tin giải pháp</em>}
+                            </div>
+                          </div>
+
+                          {/* Hiệu quả */}
+                          <div className="relative pl-4 border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-r-lg">
+                            <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center">
+                              <span className="mr-2">📈</span> Hiệu quả Thực tế
+                            </h4>
+                            <div className="text-gray-700 dark:text-gray-300">
+                              {item.hieuqua
+                                ? <MarkdownText text={item.hieuqua} />
+                                : <em className="text-gray-400 text-sm">Chưa có thông tin hiệu quả</em>}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </>
@@ -329,4 +364,22 @@ export default function SKDetailModal({ item, onClose, appData }: SKDetailModalP
     )}
     </>
   );
+}
+={20} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 bg-gray-100 dark:bg-gray-900 p-2">
+            <iframe
+              src={item.gdrive_url.replace('/view', '/preview')}
+              className="w-full h-full rounded shadow-inner bg-white"
+              allow="autoplay"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
+  );
+}
 }

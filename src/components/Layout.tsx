@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Menu, X, Sun, Moon, Download, Search, Filter, RefreshCw } from 'lucide-react';
+import { Menu, X, Sun, Moon, Download, Search, Filter, RefreshCw, FileSpreadsheet } from 'lucide-react';
 import DeptNav from './DeptNav';
 import { User } from '../types';
+import { exportExcel } from '../lib/exportExcel';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,8 +31,8 @@ export default function Layout({
 
   const handleExportCSV = () => {
     if (!masterData) return;
-    let csvContent = '\uFEFF'; // BOM
-    csvContent += 'Mã SK,Tên Sáng Kiến,Đơn Vị,Tác Giả,Phòng/Đội,Điểm AI,Xếp Loại,Trạng Thái\n';
+    let csvContent = '﻿';
+    csvContent += 'Ma SK,Ten Sang Kien,Don Vi,Tac Gia,Phong Doi,Diem AI,Xep Loai,Trang Thai\n';
 
     Object.values(masterData.departments).forEach((dept: any) => {
       dept.items.forEach((item: any) => {
@@ -39,7 +40,7 @@ export default function Layout({
           item.ma,
           `"${item.ten.replace(/"/g, '""')}"`,
           `"${item.donvi}"`,
-          '', // Tác giả chưa có trong data
+          '',
           `"${dept.name}"`,
           item.diem,
           item.diem >= 8.5 ? 'A' : (item.diem >= 6.5 ? 'B' : 'C'),
@@ -61,7 +62,6 @@ export default function Layout({
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/50 lg:hidden"
@@ -69,7 +69,6 @@ export default function Layout({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 w-72 transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -81,7 +80,7 @@ export default function Layout({
               EVN
             </div>
             <span className="font-semibold text-gray-900 dark:text-white truncate">
-              Sáng Kiến PCVT
+              Sang Kien PCVT
             </span>
           </div>
           <button
@@ -101,6 +100,7 @@ export default function Layout({
               setSidebarOpen(false);
             }}
             user={user}
+            gsheetData={appData?.gsheetData}
           />
         </div>
 
@@ -114,21 +114,19 @@ export default function Layout({
               <p className="text-xs text-gray-500 truncate">{user.username}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onLogout}
             className="w-full flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none transition-colors"
           >
-            🔓 Đăng xuất
+            Dang xuat
           </button>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 text-center">
-            Cập nhật: {masterData?.generated_at ? new Date(masterData.generated_at).toLocaleString('vi-VN') : 'Đang tải...'}
+            Cap nhat: {masterData?.generated_at ? new Date(masterData.generated_at).toLocaleString('vi-VN') : 'Dang tai...'}
           </p>
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <header className="flex h-16 items-center justify-between px-4 sm:px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors">
           <div className="flex items-center">
             <button
@@ -139,10 +137,10 @@ export default function Layout({
             </button>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white hidden sm:block">
               {currentTab === 'overview'
-                ? 'Tổng quan Phân loại'
+                ? 'Tong quan Phan loai'
                 : currentTab === 'tracking'
-                ? 'Theo dõi Tiến độ'
-                : masterData?.departments[currentTab]?.name || 'Chi tiết'}
+                ? 'Theo doi Tien do'
+                : masterData?.departments[currentTab]?.name || 'Chi tiet'}
             </h1>
           </div>
 
@@ -157,7 +155,7 @@ export default function Layout({
                     type="text"
                     value={appData.searchQuery}
                     onChange={(e) => appData.setSearchQuery(e.target.value)}
-                    placeholder={currentTab === 'tracking' ? "Tìm mọi phòng đội..." : "Tìm trong phòng..."}
+                    placeholder={currentTab === 'tracking' ? "Tim moi phong doi..." : "Tim trong phong..."}
                     className="block w-full pl-7 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue text-xs sm:text-sm"
                   />
                 </div>
@@ -171,12 +169,12 @@ export default function Layout({
                       onChange={(e) => appData.setStatusFilter(e.target.value)}
                       className="block w-full pl-7 sm:pl-10 pr-6 sm:pr-8 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue text-xs sm:text-sm appearance-none"
                     >
-                      <option value="all">Tất cả</option>
-                      <option value="chua_xet">⏳ Chưa xét</option>
-                      <option value="da_cham">✏️ Đã chấm</option>
-                      <option value="dang_tk">🚀 Triển khai</option>
-                      <option value="hoan_thanh">✅ Hoàn thành</option>
-                      <option value="khong_trien_khai">❌ Không TK</option>
+                      <option value="all">Tat ca</option>
+                      <option value="chua_xet">Chua xet</option>
+                      <option value="da_cham">Da cham</option>
+                      <option value="dang_tk">Trien khai</option>
+                      <option value="hoan_thanh">Hoan thanh</option>
+                      <option value="khong_trien_khai">Khong TK</option>
                     </select>
                   </div>
                 )}
@@ -186,32 +184,41 @@ export default function Layout({
             <button
               onClick={appData.refreshData}
               className={`p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 ${appData.loading ? 'animate-spin text-evn-blue' : ''}`}
-              title="Làm mới dữ liệu"
+              title="Lam moi du lieu"
             >
               <RefreshCw size={20} />
             </button>
             <button
               onClick={onToggleDark}
               className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hidden sm:block"
-              title="Đổi giao diện Sáng/Tối"
+              title="Doi giao dien"
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            
+
             {user.role === 'admin' && (
-              <button
-                onClick={handleExportCSV}
-                className="flex items-center space-x-1 p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                title="Xuất CSV"
-              >
-                <Download size={20} />
-                <span className="hidden sm:inline text-sm font-medium">Xuất CSV</span>
-              </button>
+              <>
+                <button
+                  onClick={() => masterData && exportExcel(masterData, appData.gsheetData)}
+                  className="flex items-center space-x-1 p-2 rounded-md text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  title="Xuat bao cao Excel"
+                >
+                  <FileSpreadsheet size={20} />
+                  <span className="hidden sm:inline text-sm font-medium">Excel</span>
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center space-x-1 p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Xuat CSV"
+                >
+                  <Download size={20} />
+                  <span className="hidden sm:inline text-sm font-medium">CSV</span>
+                </button>
+              </>
             )}
           </div>
         </header>
 
-        {/* Main Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 animate-fade-in">
           {children}
         </main>

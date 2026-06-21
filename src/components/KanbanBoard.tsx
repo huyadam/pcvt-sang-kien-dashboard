@@ -4,6 +4,7 @@ import KanbanCard from './KanbanCard';
 import TrackingModal from './TrackingModal';
 
 import { isSameDept } from '../lib/auth';
+import { DEPT_GROUPS } from '../lib/constants';
 
 interface KanbanBoardProps {
   appData: any;
@@ -11,6 +12,7 @@ interface KanbanBoardProps {
 
 export default function KanbanBoard({ appData }: KanbanBoardProps) {
   const { masterData, gsheetData, searchQuery, user } = appData;
+  const [selectedKhoi, setSelectedKhoi] = useState<string>('all');
   const [selectedDept, setSelectedDept] = useState<string>(() => {
     if (user && user.role === 'dept' && user.deptKey) {
       return user.deptKey;
@@ -19,11 +21,19 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
   });
   const [selectedItem, setSelectedItem] = useState<{ item: SangKien, track: TrackingRecord | null } | null>(null);
 
+  // Helper: kiểm tra dept có thuộc khối đang chọn không
+  const isInKhoi = (deptName: string, khoi: string): boolean => {
+    if (khoi === 'all') return true;
+    const group = DEPT_GROUPS.find(g => g.label === khoi);
+    if (!group) return false;
+    return group.depts.some(gd => deptName.includes(gd) || gd.includes(deptName));
+  };
+
   // Helper: kiểm tra department key có match với selected dept không (hỗ trợ alias)
-  const isDeptMatch = (deptKey: string, selected: string): boolean => {
+  const isDeptMatch = (deptKey: string, deptName: string, selected: string): boolean => {
     if (selected === 'all') return true;
     if (deptKey === selected) return true;
-    return isSameDept(deptKey, selected);
+    return isSameDept(deptKey, selected) || isSameDept(deptName, selected);
   };
 
   const { trackMap, scoreMap, colItems } = useMemo(() => {
@@ -50,7 +60,9 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     let all: SangKien[] = [];
     if (masterData) {
       Object.entries(masterData.departments).forEach(([key, dept]: [string, any]) => {
-        if (isDeptMatch(key, selectedDept)) {
+        const khoiOk = isInKhoi(dept.name, selectedKhoi);
+        const deptOk = isDeptMatch(key, dept.name, selectedDept);
+        if (khoiOk && deptOk) {
           all = all.concat(dept.items);
         }
       });
@@ -87,7 +99,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
     });
 
     return { trackMap: tMap, scoreMap: sMap, colItems: cols };
-  }, [masterData, gsheetData, searchQuery, selectedDept]);
+  }, [masterData, gsheetData, searchQuery, selectedDept, selectedKhoi]);
 
   const isEmpty = colItems.da_cham.length === 0 && colItems.dang_tk.length === 0 && colItems.hoan_thanh.length === 0 && colItems.khong_trien_khai.length === 0;
 
@@ -105,11 +117,20 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
           <span className="flex items-center text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full"><span className="mr-1">✅</span> Hoàn thành</span>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Lọc phòng đội:</span>
-          <select 
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={selectedKhoi}
+            onChange={(e) => { setSelectedKhoi(e.target.value); setSelectedDept('all'); }}
+            className="p-1.5 sm:p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-evn-blue"
+          >
+            <option value="all">🏢 Tất cả Khối</option>
+            {DEPT_GROUPS.map(g => (
+              <option key={g.label} value={g.label}>{g.icon} {g.label}</option>
+            ))}
+          </select>
+          <select
             value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
+            onChange={(e) => { setSelectedDept(e.target.value); setSelectedKhoi('all'); }}
             className="w-48 p-1.5 sm:p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-evn-blue"
           >
             <option value="all">🌐 Tất cả Phòng/Đội</option>
@@ -197,16 +218,16 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
         <div className="flex-shrink-0 w-80 bg-gray-100 dark:bg-gray-800/50 rounded-lg flex flex-col max-h-full border border-gray-200 dark:border-gray-700 opacity-80 hover:opacity-100 transition-opacity">
           <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-red-100/30 dark:bg-red-900/10 rounded-t-lg">
             <h3 className="font-semibold text-red-700 dark:text-red-400 flex justify-between items-center">
-              <span>❌ Không triển khai</span>
+              <span>Khong Trien khai</span>
               <span className="bg-white dark:bg-gray-800 text-xs px-2 py-1 rounded-full">{colItems.khong_trien_khai.length}</span>
             </h3>
           </div>
           <div className="p-3 flex-1 overflow-y-auto space-y-3">
             {colItems.khong_trien_khai.map(item => (
-              <KanbanCard 
-                key={item.ma} 
-                item={item} 
-                track={trackMap.get(item.ma) || null} 
+              <KanbanCard
+                key={item.ma}
+                item={item}
+                track={trackMap.get(item.ma) || null}
                 boardScore={scoreMap.get(item.ma)}
                 onClick={() => setSelectedItem({ item, track: trackMap.get(item.ma) || null })}
               />
@@ -217,7 +238,7 @@ export default function KanbanBoard({ appData }: KanbanBoardProps) {
       )}
 
       {selectedItem && (
-        <TrackingModal 
+        <TrackingModal
           item={selectedItem.item}
           track={selectedItem.track}
           onClose={() => setSelectedItem(null)}

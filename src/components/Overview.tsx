@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { MasterData, SangKien } from '../types';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { sortDeptEntries } from '../lib/constants';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis } from 'recharts';
+import { sortDeptEntries, DEPT_GROUPS } from '../lib/constants';
 
 interface OverviewProps {
   appData: any;
@@ -99,6 +99,27 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
     });
   }, [masterData, filterDept]);
 
+  const khoiStats = useMemo(() => {
+    return DEPT_GROUPS.map(group => {
+      let total = 0, valid = 0, hoanThanh = 0, dangTK = 0, daCham = 0;
+      Object.entries(masterData.departments).forEach(([_, dept]: [string, any]) => {
+        const inGroup = group.depts.some(gd => dept.name.includes(gd) || gd.includes(dept.name));
+        if (!inGroup) return;
+        dept.items.forEach((item: SangKien) => {
+          total++;
+          if (!item.hard_filtered) {
+            valid++;
+            if (item.trang_thai === 'hoan_thanh') hoanThanh++;
+            else if (item.trang_thai === 'dang_tk' || item.trang_thai === 'trien_khai') dangTK++;
+            else if (item.trang_thai === 'da_cham' || item.trang_thai === 'da_xet') daCham++;
+          }
+        });
+      });
+      const pctDone = valid > 0 ? Math.round((hoanThanh / valid) * 100) : 0;
+      return { ...group, total, valid, hoanThanh, dangTK, daCham, pctDone };
+    });
+  }, [masterData]);
+
   const topItems = useMemo(() => {
     let all: Array<SangKien & { totalScore: number }> = [];
     
@@ -181,93 +202,106 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Tỷ lệ Trạng thái Sáng kiến</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
+      {/* Thống kê theo Khối */}
+      {filterDept === 'all' && (
+        <div>
+          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Thống kê theo Khối</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {khoiStats.map(g => (
+              <div key={g.label} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-sm font-semibold ${g.color}`}>{g.icon} {g.label}</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{g.valid}</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-2">
+                  <div
+                    className="bg-green-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${g.pctDone}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <span>✅ HT: {g.hoanThanh}</span>
+                  <span>🔄 TK: {g.dangTK}</span>
+                  <span>📋 Chấm: {g.daCham}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard + Radar — chỉ hiện khi xem tất cả */}
+      {filterDept === 'all' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Leaderboard khối */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">🏆 Xếp hạng Khối</h3>
+            <div className="space-y-3">
+              {[...khoiStats]
+                .sort((a, b) => b.pctDone - a.pctDone || b.hoanThanh - a.hoanThanh)
+                .map((g, idx) => {
+                  const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+                  const pctTK = g.valid > 0 ? Math.round(((g.hoanThanh + g.dangTK) / g.valid) * 100) : 0;
+                  return (
+                    <div key={g.label} className="flex items-center space-x-3">
+                      <span className="text-xl w-8 text-center">{medals[idx]}</span>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className={`text-sm font-medium ${g.color}`}>{g.icon} {g.label}</span>
+                          <span className="text-xs text-gray-500">{g.hoanThanh} HT / {g.valid} SK</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `${g.pctDone}%` }} />
+                          <div className="bg-blue-400 h-2 rounded-full -mt-2" style={{ width: `${pctTK}%`, opacity: 0.4 }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                          <span>HT: {g.pctDone}%</span>
+                          <span>Đang TK: {pctTK}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Radar chart so sánh khối */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">📡 So sánh Khối (radar)</h3>
+            <div className="h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart
+                  data={(() => {
+                    const maxValid = Math.max(...khoiStats.map(g => g.valid), 1);
+                    return [
+                      { metric: 'Số lượng', ...Object.fromEntries(khoiStats.map(g => [g.label, Math.round((g.valid / maxValid) * 100)])) },
+                      { metric: '% Hoàn thành', ...Object.fromEntries(khoiStats.map(g => [g.label, g.pctDone])) },
+                      { metric: '% Triển khai', ...Object.fromEntries(khoiStats.map(g => [g.label, g.valid > 0 ? Math.round(((g.hoanThanh + g.dangTK) / g.valid) * 100) : 0])) },
+                      { metric: '% Đã chấm', ...Object.fromEntries(khoiStats.map(g => [g.label, g.valid > 0 ? Math.round((g.daCham / g.valid) * 100) : 0])) },
+                    ];
+                  })()}
                   outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                  {khoiStats.map((g) => (
+                    <Radar
+                      key={g.label}
+                      name={g.label}
+                      dataKey={g.label}
+                      stroke={g.label.includes('Kỹ thuật') ? '#ca8a04' : g.label.includes('Kinh doanh') ? '#16a34a' : g.label.includes('ĐTXD') ? '#2563eb' : '#7c3aed'}
+                      fill={g.label.includes('Kỹ thuật') ? '#ca8a04' : g.label.includes('Kinh doanh') ? '#16a34a' : g.label.includes('ĐTXD') ? '#2563eb' : '#7c3aed'}
+                      fillOpacity={0.08}
+                      strokeWidth={2}
+                    />
                   ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ color: isDark ? '#d1d5db' : '#374151', fontSize: '12px', marginTop: '10px' }} />
-              </PieChart>
-            </ResponsiveContainer>
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-
-        {/* Stacked Bar Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Trạng thái theo Phòng/Đội</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 11 }} />
-                <YAxis tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 11 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend verticalAlign="top" height={30} wrapperStyle={{ color: isDark ? '#d1d5db' : '#374151', fontSize: '12px' }} />
-                <Bar dataKey="Chưa xét" stackId="a" fill={COLORS.chua_xet} radius={[0,0,2,2]} />
-                <Bar dataKey="Đã chấm/xét" stackId="a" fill={COLORS.da_cham} />
-                <Bar dataKey="Đang TK" stackId="a" fill={COLORS.dang_tk} />
-                <Bar dataKey="Hoàn thành" stackId="a" fill={COLORS.hoan_thanh} />
-                <Bar dataKey="Không TK" stackId="a" fill={COLORS.khong_trien_khai} radius={[2,2,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Sáng kiến */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Top 10 Sáng kiến Nổi bật</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: '50px' }} />
-              <col style={{ width: '100px' }} />
-              <col style={{ width: '50%' }} />
-              <col style={{ width: '100px' }} />
-              <col style={{ width: '80px' }} />
-            </colgroup>
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hạng</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mã SK</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tên Sáng Kiến</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Đơn vị</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Điểm</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {topItems.map((item, idx) => (
-                <tr key={item.ma} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${idx === 0 ? 'bg-yellow-100 text-yellow-800' : idx === 1 ? 'bg-gray-200 text-gray-800' : idx === 2 ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
-                      {idx + 1}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-evn-blue dark:text-blue-400">{item.ma}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100"><div className="line-clamp-1">{item.ten}</div></td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.donvi}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{item.totalScore.toFixed(1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

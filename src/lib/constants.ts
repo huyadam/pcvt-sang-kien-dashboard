@@ -1,6 +1,5 @@
 /**
- * Thứ tự Phòng/Đội chuẩn theo QĐ 09/QĐ-PCVT ngày 14/07/2025
- * Key = phong_doi trong Google Sheet (ThongTinChung)
+ * Thu tu Phong/Doi chuan theo QD 09/QD-PCVT ngay 14/07/2025
  */
 export const DEPT_ORDER: string[] = [
   'Văn Phòng',
@@ -20,8 +19,7 @@ export const DEPT_ORDER: string[] = [
 ];
 
 /**
- * Sắp xếp danh sách department entries theo thứ tự QĐ 09.
- * Departments không nằm trong danh sách sẽ được đẩy xuống cuối.
+ * Sap xep danh sach department entries theo thu tu QD 09.
  */
 export function sortDeptEntries(entries: [string, any][]): [string, any][] {
   return entries.sort((a, b) => {
@@ -33,4 +31,42 @@ export function sortDeptEntries(entries: [string, any][]): [string, any][] {
     if (idxB === -1) idxB = 999;
     return idxA - idxB;
   });
+}
+
+/**
+ * Nhom Khoi - dung de gom phong/doi trong sidebar va overview
+ */
+export const DEPT_GROUPS: { label: string; icon: string; color: string; depts: string[] }[] = [
+  {
+    label: 'Khối Kỹ thuật',
+    icon: '⚡',
+    color: 'text-yellow-600 dark:text-yellow-400',
+    depts: ['Kỹ thuật An toàn', 'Quản lý Lưới điện', 'Vận hành Lưới điện'],
+  },
+  {
+    label: 'Khối Kinh doanh',
+    icon: '💼',
+    color: 'text-green-600 dark:text-green-400',
+    depts: ['Kinh doanh', 'Dịch vụ Khách hàng', 'Quản lý Thu ghi', 'QL Hệ thống Đo đếm'],
+  },
+  {
+    label: 'Khối ĐTXD',
+    icon: '🏗️',
+    color: 'text-blue-600 dark:text-blue-400',
+    depts: ['Quản lý Đầu tư', 'Kế hoạch Vật tư', 'Tài chính Kế toán'],
+  },
+  {
+    label: 'Khối Văn phòng',
+    icon: '🏗️',
+    color: 'text-purple-600 dark:text-purple-400',
+    depts: ['Văn Phòng', 'Tổ chức Nhân sự', 'QL Vận hành Côn Đảo'],
+  },
+];
+
+/** Tra ve ten khoi cua mot phong/doi, hoac null neu khong thuoc khoi nao */
+export function getDeptGroup(deptName: string): string | null {
+  for (const g of DEPT_GROUPS) {
+    if (g.depts.some(d => deptName.includes(d) || d.includes(deptName))) return g.label;
+  }
+  return null;
 }

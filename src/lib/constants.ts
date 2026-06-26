@@ -41,7 +41,7 @@ export const DEPT_GROUPS: { label: string; icon: string; color: string; depts: s
     label: 'Khối Kỹ thuật',
     icon: '⚡',
     color: 'text-yellow-600 dark:text-yellow-400',
-    depts: ['Kỹ thuật An toàn', 'Quản lý Lưới điện', 'Vận hành Lưới điện'],
+    depts: ['Kỹ thuật An toàn', 'Vận hành Lưới điện', 'Quản lý Lưới điện'],
   },
   {
     label: 'Khối Kinh doanh',
@@ -53,13 +53,13 @@ export const DEPT_GROUPS: { label: string; icon: string; color: string; depts: s
     label: 'Khối ĐTXD',
     icon: '🏗️',
     color: 'text-blue-600 dark:text-blue-400',
-    depts: ['Quản lý Đầu tư', 'Kế hoạch Vật tư', 'Tài chính Kế toán'],
+    depts: ['Quản lý Đầu tư'],
   },
   {
-    label: 'Khối Văn phòng',
-    icon: '🏗️',
+    label: 'Khối Hành chính',
+    icon: '🏢',
     color: 'text-purple-600 dark:text-purple-400',
-    depts: ['Văn Phòng', 'Tổ chức Nhân sự', 'QL Vận hành Côn Đảo'],
+    depts: ['Văn Phòng', 'Tổ chức Nhân sự', 'Kế hoạch Vật tư', 'Tài chính Kế toán', 'QL Vận hành Côn Đảo'],
   },
 ];
 

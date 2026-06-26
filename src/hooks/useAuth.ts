@@ -16,24 +16,7 @@ export function useAuth() {
   });
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    let dynamicAccounts: any[] = [];
-    try {
-      const cache = localStorage.getItem(CACHE_KEY);
-      if (cache) {
-        const parsed = JSON.parse(cache);
-        dynamicAccounts = parsed.accounts || [];
-      }
-    } catch (_) {}
-
-    if (dynamicAccounts.length === 0) {
-      try {
-        const freshData = await api.loadAll();
-        dynamicAccounts = freshData.accounts || [];
-        localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      } catch (_) {}
-    }
-
-    const u = authenticate(username, password, dynamicAccounts);
+    const u = authenticate(username, password);
     if (u) {
       setUser(u);
       localStorage.setItem(SESSION_KEY, JSON.stringify(u));

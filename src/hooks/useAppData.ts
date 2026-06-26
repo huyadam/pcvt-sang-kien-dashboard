@@ -25,6 +25,7 @@ export function useAppData(user: User | null) {
     return getDeptKeyForUser(user.username);
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchScope, setSearchScope] = useState<'dept' | 'all'>('dept');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ col: 'diem', asc: false });
 
@@ -243,6 +244,8 @@ export function useAppData(user: User | null) {
     setCurrentTab,
     searchQuery,
     setSearchQuery,
+    searchScope,
+    setSearchScope,
     statusFilter,
     setStatusFilter,
     sortConfig,

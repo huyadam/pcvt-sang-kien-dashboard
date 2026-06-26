@@ -161,7 +161,8 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
             <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg flex justify-between items-center border border-gray-200 dark:border-gray-700">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Điểm AI Đề xuất</p>
-                <p className="text-2xl font-bold text-evn-blue dark:text-blue-400">{item.diem.toFixed(1)}/10</p>
+                <p className="text-2xl font-bold text-evn-blue dark:text-blue-400">{item.diem.toFixed(1)}<span className="text-sm text-gray-500">/10</span></p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">≈ {(item.diem * 10).toFixed(0)}/100</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tổng điểm Hội đồng</p>
@@ -182,6 +183,7 @@ export default function ScoreModal({ item, onClose, appData }: ScoreModalProps) 
                     Loại {grade}
                   </span>
                 </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 text-right">≈ {(total / 10).toFixed(1)}/10</p>
               </div>
             </div>
 

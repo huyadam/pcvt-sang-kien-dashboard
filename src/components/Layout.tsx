@@ -147,7 +147,34 @@ export default function Layout({
           <div className="flex items-center space-x-2 sm:space-x-4">
             {currentTab !== 'overview' && (
               <div className="flex items-center space-x-2">
-                <div className="relative w-32 sm:w-48">
+                {/* Search scope toggle (chỉ hiện ở tab phòng/đội, không hiện ở tracking) */}
+                {currentTab !== 'tracking' && (
+                  <div className="hidden sm:flex items-center rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
+                    <button
+                      onClick={() => appData.setSearchScope('dept')}
+                      className={`px-2 py-1.5 transition-colors ${
+                        appData.searchScope === 'dept'
+                          ? 'bg-evn-blue text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      }`}
+                      title="Tìm trong phòng/đội hiện tại"
+                    >
+                      Phòng/Đội
+                    </button>
+                    <button
+                      onClick={() => appData.setSearchScope('all')}
+                      className={`px-2 py-1.5 transition-colors ${
+                        appData.searchScope === 'all'
+                          ? 'bg-evn-blue text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      }`}
+                      title="Tìm toàn bộ sáng kiến"
+                    >
+                      Toàn bộ
+                    </button>
+                  </div>
+                )}
+                <div className="relative w-32 sm:w-52">
                   <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
                     <Search size={14} className="text-gray-400" />
                   </div>
@@ -155,7 +182,13 @@ export default function Layout({
                     type="text"
                     value={appData.searchQuery}
                     onChange={(e) => appData.setSearchQuery(e.target.value)}
-                    placeholder={currentTab === 'tracking' ? "Tim moi phong doi..." : "Tim trong phong..."}
+                    placeholder={
+                      currentTab === 'tracking'
+                        ? 'Tìm mọi phòng đội...'
+                        : appData.searchScope === 'all'
+                        ? 'Tìm toàn bộ SK...'
+                        : 'Tìm tiêu đề, giải pháp...'
+                    }
                     className="block w-full pl-7 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-evn-blue focus:border-evn-blue text-xs sm:text-sm"
                   />
                 </div>

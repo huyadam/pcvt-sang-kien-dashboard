@@ -10,7 +10,7 @@ interface DeptTableProps {
 }
 
 export default function DeptTable({ deptKey, appData }: DeptTableProps) {
-  const { masterData, searchQuery, statusFilter, sortConfig, setSortConfig, quickStatusChange, user, gsheetData } = appData;
+  const { masterData, searchQuery, searchScope, statusFilter, sortConfig, setSortConfig, quickStatusChange, user, gsheetData } = appData;
   const [selectedSK, setSelectedSK] = useState<SangKien | null>(null);
   const [scoreFilter, setScoreFilter] = useState<'all' | 'chua_cham' | 'da_cham'>('all');
 
@@ -24,42 +24,72 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
     }
     return s;
   }, [gsheetData]);
-  
-  const filteredItems = useMemo(() => {
-    if (!deptData?.items) return [];
-    
-    return deptData.items.filter((item: SangKien) => {
-      // Filter by search
-      const query = searchQuery.toLowerCase();
-      const matchSearch = item.ma.toLowerCase().includes(query) || 
-                         item.ten.toLowerCase().includes(query) || 
-                         item.donvi.toLowerCase().includes(query);
-      
-      // Filter by workflow status
-      const matchStatus = statusFilter === 'all' || item.trang_thai === statusFilter;
 
-      // Filter by score status
+  // Build map ma_sk → tổng điểm HĐ (thang 100)
+  const scoreMap = useMemo(() => {
+    const m = new Map<string, number>();
+    if (gsheetData?.scores) {
+      gsheetData.scores.forEach((sc: any) => {
+        const total = (Number(sc.d1_tinhmoi) || 0) + (Number(sc.d2_tuchu) || 0) +
+                      (Number(sc.d3_chiphi) || 0) + (Number(sc.d4_kinhte) || 0) +
+                      (Number(sc.d5_antoan) || 0);
+        m.set(sc.ma_sk, total);
+      });
+    }
+    return m;
+  }, [gsheetData]);
+
+  // Hàm kiểm tra match search - bao gồm tiêu đề và giải pháp
+  const matchesSearch = (item: SangKien, query: string) => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return (
+      item.ma.toLowerCase().includes(q) ||
+      item.ten.toLowerCase().includes(q) ||
+      item.donvi.toLowerCase().includes(q) ||
+      (item.giaiphap || '').toLowerCase().includes(q)
+    );
+  };
+
+  const filteredItems = useMemo(() => {
+    if (!masterData) return [];
+
+    // Lấy danh sách items: toàn bộ hoặc chỉ phòng hiện tại
+    let allItems: (SangKien & { _deptName?: string })[] = [];
+    if (searchScope === 'all' && searchQuery.trim()) {
+      // Gom tất cả items từ mọi phòng, gắn thêm tên phòng
+      Object.values(masterData.departments).forEach((dept: any) => {
+        dept.items.forEach((item: SangKien) => {
+          allItems.push({ ...item, _deptName: dept.name });
+        });
+      });
+    } else {
+      if (!deptData?.items) return [];
+      allItems = deptData.items;
+    }
+
+    return allItems.filter((item: SangKien) => {
+      const matchSearch = matchesSearch(item, searchQuery);
+      const matchStatus = statusFilter === 'all' || item.trang_thai === statusFilter;
       const isScored = scoreSet.has(item.ma);
-      const matchScore = scoreFilter === 'all' || 
-                         (scoreFilter === 'da_cham' && isScored) || 
+      const matchScore = scoreFilter === 'all' ||
+                         (scoreFilter === 'da_cham' && isScored) ||
                          (scoreFilter === 'chua_cham' && !isScored);
-      
       return matchSearch && matchStatus && matchScore;
     }).sort((a: SangKien, b: SangKien) => {
-      // Ưu tiên: chưa chấm lên trước, đã chấm xuống dưới
       const aScored = scoreSet.has(a.ma) ? 1 : 0;
       const bScored = scoreSet.has(b.ma) ? 1 : 0;
       if (aScored !== bScored) return aScored - bScored;
 
-      // Sau đó sort theo cột user chọn
       const col = sortConfig.col as keyof SangKien;
       const asc = sortConfig.asc ? 1 : -1;
-      
       if (a[col] < b[col]) return -1 * asc;
       if (a[col] > b[col]) return 1 * asc;
       return 0;
     });
-  }, [deptData, searchQuery, statusFilter, scoreFilter, sortConfig, scoreSet]);
+  }, [deptData, masterData, searchQuery, searchScope, statusFilter, scoreFilter, sortConfig, scoreSet]);
+
+  const isGlobalSearch = searchScope === 'all' && !!searchQuery.trim();
 
   const handleSort = (col: string) => {
     if (sortConfig.col === col) {
@@ -88,10 +118,15 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Danh sách Sáng kiến: {deptData.name}
+              {isGlobalSearch
+                ? `Kết quả tìm toàn bộ: "${searchQuery}"`
+                : `Danh sách Sáng kiến: ${deptData.name}`}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Hiển thị {filteredItems.length} / {deptData.count} sáng kiến
+              Hiển thị {filteredItems.length}
+              {isGlobalSearch
+                ? ` kết quả từ tất cả phòng/đội`
+                : ` / ${deptData.count} sáng kiến`}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -135,6 +170,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
             <col style={{ width: '36px' }} />
             <col style={{ width: '85px' }} />
             <col />
+            {isGlobalSearch && <col style={{ width: '12%' }} />}
             <col style={{ width: '15%' }} />
             <col style={{ width: '75px' }} />
             <col style={{ width: '130px' }} />
@@ -150,11 +186,16 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('ten')}>
                 Tên Sáng Kiến {sortConfig.col === 'ten' ? (sortConfig.asc ? '↑' : '↓') : ''}
               </th>
+              {isGlobalSearch && (
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Phòng/Đội
+                </th>
+              )}
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Đơn Vị
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleSort('diem')}>
-                Điểm AI {sortConfig.col === 'diem' ? (sortConfig.asc ? '↑' : '↓') : ''}
+                Điểm {sortConfig.col === 'diem' ? (sortConfig.asc ? '↑' : '↓') : ''}
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Trạng Thái
@@ -164,14 +205,14 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={isGlobalSearch ? 7 : 6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                   Không tìm thấy sáng kiến nào phù hợp.
                 </td>
               </tr>
             ) : (
-              filteredItems.map((item: SangKien, idx: number) => (
-                <tr 
-                  key={item.ma} 
+              filteredItems.map((item: any, idx: number) => (
+                <tr
+                  key={item.ma}
                   onClick={() => setSelectedSK(item)}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                 >
@@ -184,7 +225,7 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                   <td className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
                     <div className="font-semibold line-clamp-2">{item.ten}</div>
                     <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 italic" title={item.giaiphap}>
-                      {item.giaiphap || "Chưa có tóm tắt giải pháp"}
+                      {item.giaiphap || 'Chưa có tóm tắt giải pháp'}
                     </div>
                     {item.hard_filtered && (
                       <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
@@ -197,23 +238,45 @@ export default function DeptTable({ deptKey, appData }: DeptTableProps) {
                       </span>
                     )}
                   </td>
+                  {isGlobalSearch && (
+                    <td className="px-2 py-4 text-xs font-medium text-evn-blue dark:text-blue-400">
+                      <div className="line-clamp-2 break-words">{item._deptName || ''}</div>
+                    </td>
+                  )}
                   <td className="px-2 py-4 text-xs text-gray-500 dark:text-gray-400">
                     <div className="line-clamp-2 break-words" title={item.donvi}>{item.donvi}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    {/* Điểm AI */}
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       item.diem >= 8.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                       item.diem >= 6.5 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
                       'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
                     }`}>
-                      {item.diem.toFixed(1)} / 10
+                      AI: {item.diem.toFixed(1)}/10
                     </span>
+                    {/* Điểm HĐ (quy đổi /10) nếu đã chấm */}
+                    {scoreMap.has(item.ma) && (() => {
+                      const hdTotal = scoreMap.get(item.ma)!;
+                      const hd10 = hdTotal / 10;
+                      return (
+                        <div className="mt-1">
+                          <span className={`px-2 py-0.5 inline-flex text-xs font-semibold rounded-full ${
+                            hd10 >= 8.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                            hd10 >= 6.5 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                            'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                          }`}>
+                            HĐ: {hdTotal}/100
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <StatusDropdown 
-                      maSk={item.ma} 
-                      currentStatus={item.trang_thai} 
-                      onChange={quickStatusChange} 
+                    <StatusDropdown
+                      maSk={item.ma}
+                      currentStatus={item.trang_thai}
+                      onChange={quickStatusChange}
                       disabled={!canEdit}
                     />
                   </td>

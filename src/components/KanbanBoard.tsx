@@ -13,12 +13,7 @@ interface KanbanBoardProps {
 export default function KanbanBoard({ appData }: KanbanBoardProps) {
   const { masterData, gsheetData, searchQuery, user } = appData;
   const [selectedKhoi, setSelectedKhoi] = useState<string>('all');
-  const [selectedDept, setSelectedDept] = useState<string>(() => {
-    if (user && user.role === 'dept' && user.deptKey) {
-      return user.deptKey;
-    }
-    return 'all';
-  });
+  const [selectedDept, setSelectedDept] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<{ item: SangKien, track: TrackingRecord | null } | null>(null);
 
   // Helper: kiểm tra dept có thuộc khối đang chọn không

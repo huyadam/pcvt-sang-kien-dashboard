@@ -28,9 +28,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function Overview({ appData, isDark = false }: OverviewProps) {
   const { masterData, gsheetData, user } = appData;
-  const [filterDept, setFilterDept] = useState<string>(() => {
-    return user && user.role === 'dept' && user.deptKey ? user.deptKey : 'all';
-  });
+  const [filterDept, setFilterDept] = useState<string>('all');
+  const [expandedKhoi, setExpandedKhoi] = useState<string | null>(null);
 
   if (!masterData) return null;
 
@@ -101,22 +100,35 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
 
   const khoiStats = useMemo(() => {
     return DEPT_GROUPS.map(group => {
-      let total = 0, valid = 0, hoanThanh = 0, dangTK = 0, daCham = 0;
+      let total = 0, valid = 0, hoanThanh = 0, dangTK = 0, daCham = 0, khongTK = 0;
+      const deptDetails: { name: string; total: number; hoanThanh: number; dangTK: number; daCham: number; khongTK: number; chuaXet: number }[] = [];
+
       Object.entries(masterData.departments).forEach(([_, dept]: [string, any]) => {
         const inGroup = group.depts.some(gd => dept.name.includes(gd) || gd.includes(dept.name));
         if (!inGroup) return;
+
+        let dHT = 0, dTK = 0, dCham = 0, dKhongTK = 0, dChuaXet = 0;
         dept.items.forEach((item: SangKien) => {
           total++;
           if (!item.hard_filtered) {
             valid++;
-            if (item.trang_thai === 'hoan_thanh') hoanThanh++;
-            else if (item.trang_thai === 'dang_tk' || item.trang_thai === 'trien_khai') dangTK++;
-            else if (item.trang_thai === 'da_cham' || item.trang_thai === 'da_xet') daCham++;
+            if (item.trang_thai === 'hoan_thanh') { hoanThanh++; dHT++; }
+            else if (item.trang_thai === 'dang_tk' || item.trang_thai === 'trien_khai') { dangTK++; dTK++; }
+            else if (item.trang_thai === 'da_cham' || item.trang_thai === 'da_xet') { daCham++; dCham++; }
+            else if (item.trang_thai === 'khong_trien_khai') { khongTK++; dKhongTK++; }
+            else dChuaXet++;
           }
         });
+        if (dept.count > 0) {
+          deptDetails.push({ name: dept.name, total: dept.count, hoanThanh: dHT, dangTK: dTK, daCham: dCham, khongTK: dKhongTK, chuaXet: dChuaXet });
+        }
       });
+
+      // Đã xử lý = đã chấm + đang TK + hoàn thành + không TK (tất cả đã qua chấm điểm)
+      const daXuLy = daCham + dangTK + hoanThanh + khongTK;
       const pctDone = valid > 0 ? Math.round((hoanThanh / valid) * 100) : 0;
-      return { ...group, total, valid, hoanThanh, dangTK, daCham, pctDone };
+      const pctXuLy = valid > 0 ? Math.round((daXuLy / valid) * 100) : 0;
+      return { ...group, total, valid, hoanThanh, dangTK, daCham, khongTK, daXuLy, pctDone, pctXuLy, deptDetails };
     });
   }, [masterData]);
 
@@ -205,25 +217,87 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
       {/* Thống kê theo Khối */}
       {filterDept === 'all' && (
         <div>
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Thống kê theo Khối</h3>
+          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Thống kê theo Khối <span className="text-xs font-normal text-gray-400">(bấm vào khối để xem chi tiết)</span></h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {khoiStats.map(g => (
-              <div key={g.label} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-sm font-semibold ${g.color}`}>{g.icon} {g.label}</span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">{g.valid}</span>
+              <div key={g.label} className="flex flex-col">
+                {/* Card khối — click để expand */}
+                <div
+                  onClick={() => setExpandedKhoi(expandedKhoi === g.label ? null : g.label)}
+                  className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border cursor-pointer transition-all select-none
+                    ${expandedKhoi === g.label
+                      ? 'border-evn-blue ring-1 ring-evn-blue'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-semibold ${g.color}`}>{g.icon} {g.label}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">{g.valid}</span>
+                      <span className="text-gray-400 text-xs">{expandedKhoi === g.label ? '▲' : '▼'}</span>
+                    </div>
+                  </div>
+                  {/* Progress bar: % đã xử lý (chấm + TK + HT + không TK) */}
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-2 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-green-500 transition-all" style={{ width: `${g.pctDone}%` }} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>✅ HT: {g.hoanThanh}</span>
+                    <span>🚀 TK: {g.dangTK}</span>
+                    <span>📋 Chấm: {g.daCham}</span>
+                    <span>❌ Không TK: {g.khongTK}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
+                    Đã xử lý: <span className="font-semibold text-gray-600 dark:text-gray-300">{g.daXuLy}/{g.valid}</span>
+                    <span className="ml-1">({g.pctXuLy}%)</span>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-2">
-                  <div
-                    className="bg-green-500 h-1.5 rounded-full transition-all"
-                    style={{ width: `${g.pctDone}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>✅ HT: {g.hoanThanh}</span>
-                  <span>🔄 TK: {g.dangTK}</span>
-                  <span>📋 Chấm: {g.daCham}</span>
-                </div>
+
+                {/* Expand: bảng chi tiết từng Phòng/Đội trong khối */}
+                {expandedKhoi === g.label && (
+                  <div className="mt-2 bg-white dark:bg-gray-800 rounded-lg border border-evn-blue/30 shadow-sm overflow-hidden animate-fade-in">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Phòng/Đội</th>
+                          <th className="px-2 py-2 text-center font-medium text-gray-500 dark:text-gray-400">Tổng</th>
+                          <th className="px-2 py-2 text-center font-medium text-orange-500">Chấm</th>
+                          <th className="px-2 py-2 text-center font-medium text-blue-500">TK</th>
+                          <th className="px-2 py-2 text-center font-medium text-green-600">HT</th>
+                          <th className="px-2 py-2 text-center font-medium text-red-500">K.TK</th>
+                          <th className="px-2 py-2 text-center font-medium text-gray-400">Chưa</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {g.deptDetails.map(d => {
+                          const daXuLy = d.daCham + d.dangTK + d.hoanThanh + d.khongTK;
+                          const pct = d.total > 0 ? Math.round((daXuLy / d.total) * 100) : 0;
+                          return (
+                            <tr key={d.name} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                              <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-200 truncate max-w-[100px]" title={d.name}>{d.name}</td>
+                              <td className="px-2 py-2 text-center font-bold text-gray-900 dark:text-white">{d.total}</td>
+                              <td className="px-2 py-2 text-center text-orange-600 dark:text-orange-400">{d.daCham || '-'}</td>
+                              <td className="px-2 py-2 text-center text-blue-600 dark:text-blue-400">{d.dangTK || '-'}</td>
+                              <td className="px-2 py-2 text-center text-green-600 dark:text-green-400">{d.hoanThanh || '-'}</td>
+                              <td className="px-2 py-2 text-center text-red-500 dark:text-red-400">{d.khongTK || '-'}</td>
+                              <td className="px-2 py-2 text-center text-gray-400">{d.chuaXet || '-'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                        <tr>
+                          <td className="px-3 py-2 font-bold text-gray-700 dark:text-gray-200">Tổng</td>
+                          <td className="px-2 py-2 text-center font-bold text-gray-900 dark:text-white">{g.valid}</td>
+                          <td className="px-2 py-2 text-center font-bold text-orange-600">{g.daCham || '-'}</td>
+                          <td className="px-2 py-2 text-center font-bold text-blue-600">{g.dangTK || '-'}</td>
+                          <td className="px-2 py-2 text-center font-bold text-green-600">{g.hoanThanh || '-'}</td>
+                          <td className="px-2 py-2 text-center font-bold text-red-500">{g.khongTK || '-'}</td>
+                          <td className="px-2 py-2 text-center font-bold text-gray-400">{g.valid - g.daXuLy || '-'}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
               </div>
             ))}
           </div>

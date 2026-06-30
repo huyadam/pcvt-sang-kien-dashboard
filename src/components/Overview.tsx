@@ -40,16 +40,25 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
   };
 
   const stats = useMemo(() => {
-    let valid = 0, filtered = 0, review = 0, total = 0;
+    let total = 0, hopLe = 0, daCham = 0, trienkhai = 0;
+
+    // Tập hợp tên dept thuộc các khối (bỏ "Khác/Ngoài PCVT")
+    const allGroupDeptNames = new Set(DEPT_GROUPS.flatMap(g => g.depts));
+    const isInAnyGroup = (deptName: string) =>
+      DEPT_GROUPS.some(g => g.depts.some(gd => deptName.includes(gd) || gd.includes(deptName)));
+
     getFilteredDepts().forEach(([_, dept]: [string, any]) => {
-      total += dept.count;
+      const inGroup = filterDept === 'all' ? isInAnyGroup(dept.name) : true;
       dept.items.forEach((item: SangKien) => {
-        if (item.hard_filtered) filtered++;
-        else valid++;
-        if (item.need_review) review++;
+        total++;
+        if (inGroup) hopLe++;
+        // Đã chấm = bất kỳ trạng thái nào đã qua chấm điểm
+        if (['da_cham', 'da_xet', 'dang_tk', 'trien_khai', 'hoan_thanh', 'khong_trien_khai'].includes(item.trang_thai)) daCham++;
+        // Triển khai = đang TK hoặc hoàn thành
+        if (['dang_tk', 'trien_khai', 'hoan_thanh'].includes(item.trang_thai)) trienkhai++;
       });
     });
-    return { valid, filtered, review, total };
+    return { total, hopLe, daCham, trienkhai };
   }, [masterData, filterDept]);
 
   const pieData = useMemo(() => {
@@ -201,16 +210,23 @@ export default function Overview({ appData, isDark = false }: OverviewProps) {
           <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{stats.total}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-evn-blue">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hợp Lệ Cấp Cơ Sở</p>
-          <p className="text-3xl font-bold text-evn-blue mt-2">{stats.valid}</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Hợp lệ Cấp Cơ sở</p>
+          <p className="text-3xl font-bold text-evn-blue mt-2">{stats.hopLe}</p>
+          <p className="text-xs text-gray-400 mt-1">Giao các Phòng/Đội (trừ Khác)</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-gray-300">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loại (Hard-filtered)</p>
-          <p className="text-3xl font-bold text-gray-600 dark:text-gray-300 mt-2">{stats.filtered}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-orange-400">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Đã Chấm Điểm</p>
+          <p className="text-3xl font-bold text-orange-500 mt-2">{stats.daCham}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {stats.hopLe > 0 ? Math.round(stats.daCham / stats.hopLe * 100) : 0}% hợp lệ đã xét
+          </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-evn-orange">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Cần Review Thêm</p>
-          <p className="text-3xl font-bold text-evn-orange mt-2">{stats.review}</p>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Triển Khai</p>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{stats.trienkhai}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {stats.daCham > 0 ? Math.round(stats.trienkhai / stats.daCham * 100) : 0}% đã chấm được TK
+          </p>
         </div>
       </div>
 

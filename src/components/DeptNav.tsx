@@ -161,25 +161,40 @@ export default function DeptNav({ departments, currentTab, onTabChange, user, gs
 
       <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
 
-      {user.role === 'dept' && myDepts.length > 0 && (
-        <>
-          <div className="px-4 mb-1 text-xs font-semibold text-evn-orange uppercase tracking-wider flex items-center space-x-1">
-            <span>Phong cua toi</span>
-          </div>
-          {myDepts.map(([key, dept]) => (
-            <NavItem key={key} id={key} label={dept.name} icon="*" badge={dept.count}
-              deadlineCount={deadlineMap[dept.name] || deadlineMap[key] || 0} />
+      {/* Skeleton khi chưa có dữ liệu */}
+      {depts.length === 0 ? (
+        <div className="px-4 space-y-2 animate-pulse">
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-8 bg-gray-100 dark:bg-gray-700/50 rounded"></div>
           ))}
-          <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-4 mb-2"></div>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-8 bg-gray-100 dark:bg-gray-700/50 rounded"></div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {user.role === 'dept' && myDepts.length > 0 && (
+            <>
+              <div className="px-4 mb-1 text-xs font-semibold text-evn-orange uppercase tracking-wider flex items-center space-x-1">
+                <span>Phong cua toi</span>
+              </div>
+              {myDepts.map(([key, dept]) => (
+                <NavItem key={key} id={key} label={dept.name} icon="*" badge={dept.count}
+                  deadlineCount={deadlineMap[dept.name] || deadlineMap[key] || 0} />
+              ))}
+              <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
+            </>
+          )}
+          <div className="pb-1">
+            {user.role === 'admin'
+              ? renderGrouped(depts)
+              : renderGrouped(otherDepts)
+            }
+          </div>
         </>
       )}
-
-      <div className="pb-1">
-        {user.role === 'admin'
-          ? renderGrouped(depts)
-          : renderGrouped(otherDepts)
-        }
-      </div>
     </nav>
   );
 }

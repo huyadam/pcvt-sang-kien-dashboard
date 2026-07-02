@@ -1,7 +1,14 @@
 import { User } from '../types';
 
+// Token dùng cho auto-login (nhúng vào URL: ?token=xxx)
+export const AUTO_LOGIN_TOKENS: Record<string, string> = {
+  'pcvt-sk-nntuyen-2026': 'nntuyen',
+  'pcvt-sk-admin-2026':   'admin',
+};
+
 export const ACCOUNTS: { username: string; password: string; displayName: string; role: 'admin' | 'dept'; deptKey: string; aliases: string[] }[] = [
-  { username: 'admin',  password: 'admin',   displayName: 'Quản trị viên',       role: 'admin', deptKey: '', aliases: [] },
+  { username: 'admin',   password: '@A12345678', displayName: 'Quản trị viên',  role: 'admin', deptKey: '', aliases: [] },
+  { username: 'nntuyen', password: 'nntuyen@654', displayName: 'Nguyễn Ngọc Tuyền', role: 'admin', deptKey: '', aliases: [] },
   { username: 'vp',     password: 'vp',      displayName: 'Văn Phòng',            role: 'dept', deptKey: 'Văn Phòng',           aliases: ['VP', 'Văn phòng'] },
   { username: 'tcns',   password: 'tcns',    displayName: 'Tổ chức Nhân sự',      role: 'dept', deptKey: 'Tổ chức Nhân sự',     aliases: ['TCNS', 'Nhân sự'] },
   { username: 'khvt',   password: 'khvt',    displayName: 'Kế hoạch Vật tư',      role: 'dept', deptKey: 'Kế hoạch Vật tư',     aliases: ['KHVT', 'Vật tư'] },
@@ -27,6 +34,20 @@ export function getMergedAccounts(gsheetAccounts?: any[]) {
     }
     return baseAcc;
   });
+}
+
+/** Auto-login qua URL token — không cần nhập password */
+export function authenticateByToken(token: string): User | null {
+  const username = AUTO_LOGIN_TOKENS[token];
+  if (!username) return null;
+  const account = ACCOUNTS.find(a => a.username === username);
+  if (!account) return null;
+  return {
+    username: account.username,
+    displayName: account.displayName,
+    role: account.role,
+    deptKey: account.deptKey,
+  };
 }
 
 export function authenticate(username: string, password: string, dynamicAccounts?: any[]): User | null {
